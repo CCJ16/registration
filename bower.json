@@ -1,9 +1,9 @@
 {
-  "name": "angular-seed",
-  "description": "A starter project for AngularJS",
-  "version": "0.0.0",
-  "homepage": "https://github.com/angular/angular-seed",
-  "license": "MIT",
+  "name": "ccj16-registration",
+  "description": "AngularJS based form for filling out CCJ16 registrations",
+  "version": "0.0.1",
+  "homepage": "https://github.com/CCJ16/registration",
+  "license": "AGPL-3.0",
   "private": true,
   "dependencies": {
     "angular": "1.3.x",
