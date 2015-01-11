@@ -163,7 +163,7 @@ func (h *PreRegHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func registerHandler(r mux.Router, db *bolt.DB) {
+func registerGroupPreRegistrationHandler(r *mux.Router, db *bolt.DB) {
 	prdb, err := NewPreRegBoltDb(db)
 	if err != nil {
 		log.Fatal(err)
