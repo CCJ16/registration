@@ -1,13 +1,12 @@
 'use strict';
 
 // Declare app level module which depends on views, and components
-angular.module('myApp', [
+angular.module('ccj16reg', [
   'ngRoute',
   'ngMaterial',
-  'myApp.view1',
-  'myApp.view2',
-  'myApp.version'
+  'ccj16reg.registration',
+  'ccj16reg.view.register',
 ]).
 config(['$routeProvider', function($routeProvider) {
-  $routeProvider.otherwise({redirectTo: '/view1'});
+  $routeProvider.otherwise({redirectTo: '/register'});
 }]);
