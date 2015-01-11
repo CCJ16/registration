@@ -38,10 +38,6 @@ func TestPreRegCreateRequest(t *testing.T) {
 			db: prdb,
 		}
 
-		Reset(func() {
-			prdb.entries = nil
-		})
-
 		Convey("When given a good record", func() {
 			r, err := http.NewRequest("POST", "http://localhost:8080/prereg", &goodRecordBody)
 			if err != nil {
