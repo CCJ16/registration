@@ -7,6 +7,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+
+	"encoding/gob"
+	"io/ioutil"
+	"os"
+
+	"github.com/boltdb/bolt"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -14,8 +21,8 @@ type testPreRegDb struct {
 	entries []GroupPreRegistration
 }
 
-func (db *testPreRegDb) CreateRecord(in GroupPreRegistration) error {
-	db.entries = append(db.entries, in)
+func (db *testPreRegDb) CreateRecord(in *GroupPreRegistration) error {
+	db.entries = append(db.entries, *in)
 	return nil
 }
 
@@ -71,6 +78,83 @@ func TestPreRegCreateRequest(t *testing.T) {
 			})
 			Convey("Shouldn't update the database", func() {
 				So(prdb.entries, ShouldBeEmpty)
+			})
+		})
+	})
+}
+
+func TestGroupPreRegDbInBolt(t *testing.T) {
+	Convey("With a given bolt database", t, func() {
+		file, err := ioutil.TempFile("", "")
+		So(err, ShouldBeNil)
+		Reset(func() {
+			So(os.Remove(file.Name()), ShouldBeNil)
+			file.Close()
+		})
+
+		db, err := bolt.Open(file.Name(), 0, nil)
+		So(err, ShouldBeNil)
+		Reset(func() {
+			So(db.Close(), ShouldBeNil)
+		})
+
+		prdb, err := NewPreRegBoltDb(db)
+		So(err, ShouldBeNil)
+
+		Convey("Inserting a group", func() {
+			rec := GroupPreRegistration{
+				PackName:           "Pack A",
+				GroupName:          "1st Testingway",
+				Council:            "Council rock",
+				ContactLeaderEmail: "testemail@example.com",
+			}
+			duprec := rec
+			So(prdb.CreateRecord(&rec), ShouldBeNil)
+
+			Convey("Should set a security key", func() {
+				So(rec.SecurityKey, ShouldNotBeNil)
+				So(len(rec.SecurityKey), ShouldEqual, 128)
+			})
+
+			Convey("Should make it available in bolt", func() {
+				record := GroupPreRegistration{}
+				So(db.View(func(tx *bolt.Tx) error {
+					data := tx.Bucket(BOLT_GROUPBUCKET).Get(rec.Key())
+					decoder := gob.NewDecoder(bytes.NewReader(data))
+					return decoder.Decode(&record)
+				}), ShouldBeNil)
+				So(record, ShouldResemble, rec)
+
+				Convey("And Organic key index exists", func() {
+					var data []byte
+					So(db.View(func(tx *bolt.Tx) error {
+						data = tx.Bucket(BOLT_GROUPNAMEMAPBUCKET).Get([]byte(rec.OrganicKey()))
+						return nil
+					}), ShouldBeNil)
+					So(data, ShouldResemble, rec.Key())
+				})
+
+				Convey("And email index exists", func() {
+					var data []byte
+					So(db.View(func(tx *bolt.Tx) error {
+						data = tx.Bucket(BOLT_GROUPEMAILMAPBUCKET).Get([]byte(rec.ContactLeaderEmail))
+						return nil
+					}), ShouldBeNil)
+					So(data, ShouldResemble, rec.Key())
+				})
+			})
+
+			Convey("Should fail with an error if done again with the same security key", func() {
+				So(GroupAlreadyCreated.Contains(prdb.CreateRecord(&rec)), ShouldBeTrue)
+			})
+
+			Convey("Should fail with an error if done again with the same group set", func() {
+				So(GroupAlreadyCreated.Contains(prdb.CreateRecord(&duprec)), ShouldBeTrue)
+			})
+
+			Convey("Should fail with an error if done again with the same email set", func() {
+				duprec.Council = "Other Council"
+				So(GroupAlreadyCreated.Contains(prdb.CreateRecord(&duprec)), ShouldBeTrue)
 			})
 		})
 	})
