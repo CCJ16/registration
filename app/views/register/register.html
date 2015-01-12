@@ -1,1 +1,14 @@
 <h2>Pre-registration form</h2>
+<md-content>
+	<form>
+		<div layout="row">
+			<md-text-float label="Council" ng-model="registration.council"></md-text-float>
+			<md-text-float label="Group Name" ng-model="registration.groupName"></md-text-float>
+			<md-text-float label="Pack Name" ng-model="registration.packName"></md-text-float>
+		</div>
+		<div layout="row">
+			<md-text-float label="Email" ng-model="registration.contactLeaderEmail"></md-text-float>
+		</div>
+		<md-button class="md-raised md-primary" ng-click="submitRegistration();">Submit registration</md-button>
+	</form>
+</md-content>
