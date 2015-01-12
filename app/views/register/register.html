@@ -9,14 +9,19 @@
 		<div layout="row">
 			<md-text-float label="Pack Name" ng-model="registration.packName"></md-text-float>
 		</div>
+		<h3>Estimated Participant counts</h3>
+		<div layout="row">
+			<md-text-float type="number" label="Estimated Youth" ng-model="registration.estimatedYouth"></md-text-float>
+			<md-text-float type="number" label="Estimated Leaders" ng-model="registration.estimatedLeaders"></md-text-float>
+		</div>
 		<h3>Contact Leader information</h3>
 		<div layout="row">
 			<md-text-float label="First Name" ng-model="registration.contactLeaderFirstName"></md-text-float>
 			<md-text-float label="Last Name" ng-model="registration.contactLeaderLastName"></md-text-float>
 		</div>
 		<div layout="row">
-			<md-text-float label="Email" ng-model="registration.contactLeaderEmail"></md-text-float>
-			<md-text-float label="Phone Number" ng-model="registration.contactLeaderPhoneNumber"></md-text-float>
+			<md-text-float type="email" label="Email" ng-model="registration.contactLeaderEmail"></md-text-float>
+			<md-text-float type="tel" label="Phone Number" ng-model="registration.contactLeaderPhoneNumber"></md-text-float>
 		</div>
 		<div layout="row">
 			<md-text-float label="Address 1" ng-model="registration.contactLeaderAddress.address1"></md-text-float>
