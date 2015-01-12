@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('ccj16reg.view.register', ['ngRoute', 'ccj16reg.registration'])
+angular.module('ccj16reg.view.register', ['ngRoute', 'ngMaterial', 'ccj16reg.registration'])
 
 .config(['$routeProvider', function($routeProvider) {
 	$routeProvider.when('/register', {
