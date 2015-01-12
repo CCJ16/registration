@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 
@@ -31,7 +32,7 @@ type Address struct {
 }
 
 type GroupPreRegistration struct {
-	SecurityKey []byte `json:"-"`
+	SecurityKey []byte `json:"securityKey"`
 
 	PackName  string `json:"packName"`
 	GroupName string `json:"groupName"`
@@ -44,19 +45,18 @@ type GroupPreRegistration struct {
 
 	ContactLeaderEmail string    `json:"contactLeaderEmail"`
 	ValidatedOn        time.Time `json:"-"`
-	ValidationToken    string    `json:"-"`
+	ValidationToken    []byte    `json:"-"`
+
+	EmailConfirmationLastSent     time.Time `json:"-"`
+	EmailConfirmationSendAttempts int       `json:"-"`
 
 	EstimatedYouth   int `json:"estimatedYouth"`
 	EstimatedLeaders int `json:"estimatedLeaders"`
 }
 
-func (gpr *GroupPreRegistration) Key() []byte {
-	if gpr.SecurityKey == nil {
-		var random [128]byte
-		if _, err := rand.Read(random[:]); err != nil {
-			panic(err)
-		}
-		gpr.SecurityKey = random[:]
+func (gpr GroupPreRegistration) Key() []byte {
+	if len(gpr.SecurityKey) != 128 {
+		panic("Security was too short")
 	}
 	return gpr.SecurityKey
 }
@@ -65,13 +65,36 @@ func (gpr GroupPreRegistration) OrganicKey() string {
 	return fmt.Sprintf("%s-%s-%s", strings.TrimSpace(gpr.Council), strings.TrimSpace(gpr.GroupName), strings.TrimSpace(gpr.PackName))
 }
 
+func (gpr *GroupPreRegistration) PrepareForInsert() error {
+	if gpr.SecurityKey != nil {
+		return RecordAlreadyPrepared.New("Security key has already been created, bailing out")
+	}
+	{
+		var random [128]byte
+		if _, err := rand.Read(random[:]); err != nil {
+			return err
+		}
+		gpr.SecurityKey = random[:]
+	}
+	{
+		var random [128]byte
+		if _, err := rand.Read(random[:]); err != nil {
+			return err
+		}
+		gpr.ValidationToken = random[:]
+	}
+
+	return nil
+}
+
 type PreRegDb interface {
 	CreateRecord(rec *GroupPreRegistration) error
 }
 
 var (
-	DBError             = errors.NewClass("Database Error")
-	GroupAlreadyCreated = DBError.NewClass("Group already exists")
+	DBError               = errors.NewClass("Database Error")
+	RecordAlreadyPrepared = DBError.NewClass("Group preregistration is already prepared")
+	GroupAlreadyCreated   = DBError.NewClass("Group already exists")
 )
 
 var (
@@ -95,6 +118,9 @@ func NewPreRegBoltDb(db *bolt.DB) (PreRegDb, error) {
 }
 
 func (d *preRegDbBolt) CreateRecord(in *GroupPreRegistration) error {
+	if err := in.PrepareForInsert(); err != nil {
+		return err
+	}
 	return d.db.Update(func(tx *bolt.Tx) error {
 		gb := tx.Bucket(BOLT_GROUPBUCKET)
 		gnmb := tx.Bucket(BOLT_GROUPNAMEMAPBUCKET)
@@ -159,7 +185,13 @@ func (h *PreRegHandler) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to insert record", 500)
 		return
 	} else {
+		buf := &bytes.Buffer{}
+		if err := json.NewEncoder(buf).Encode(input); err != nil {
+			http.Error(w, "Failed to insert record", 500)
+			return
+		}
 		w.WriteHeader(http.StatusCreated)
+		io.Copy(w, buf)
 	}
 }
 

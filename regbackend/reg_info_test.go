@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-
 	"encoding/gob"
 	"io/ioutil"
 	"os"
@@ -22,6 +21,9 @@ type testPreRegDb struct {
 }
 
 func (db *testPreRegDb) CreateRecord(in *GroupPreRegistration) error {
+	if err := in.PrepareForInsert(); err != nil {
+		return err
+	}
 	db.entries = append(db.entries, *in)
 	return nil
 }
@@ -58,8 +60,18 @@ func TestPreRegCreateRequest(t *testing.T) {
 				So(w.Code, ShouldEqual, 201)
 			})
 
+			Convey("Should get back the same object with a new security key", func() {
+				newRec := GroupPreRegistration{}
+				So(json.NewDecoder(w.Body).Decode(&newRec), ShouldBeNil)
+				So(newRec.SecurityKey, ShouldNotBeEmpty)
+				goodRecord.SecurityKey = newRec.SecurityKey
+				So(newRec, ShouldResemble, goodRecord)
+			})
+
 			Convey("Should be inserted into the database", func() {
 				So(len(prdb.entries), ShouldEqual, 1)
+				goodRecord.SecurityKey = prdb.entries[0].SecurityKey
+				goodRecord.ValidationToken = prdb.entries[0].ValidationToken
 				So(prdb.entries[0], ShouldResemble, goodRecord)
 			})
 		})
@@ -144,8 +156,8 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 				})
 			})
 
-			Convey("Should fail with an error if done again with the same security key", func() {
-				So(GroupAlreadyCreated.Contains(prdb.CreateRecord(&rec)), ShouldBeTrue)
+			Convey("Should fail with an error if done again with a security key already set", func() {
+				So(RecordAlreadyPrepared.Contains(prdb.CreateRecord(&rec)), ShouldBeTrue)
 			})
 
 			Convey("Should fail with an error if done again with the same group set", func() {
