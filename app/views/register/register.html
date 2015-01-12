@@ -1,13 +1,33 @@
 <h2>Pre-registration form</h2>
 <md-content>
 	<form>
+		<h3>Group information</h3>
 		<div layout="row">
 			<md-text-float label="Council" ng-model="registration.council"></md-text-float>
 			<md-text-float label="Group Name" ng-model="registration.groupName"></md-text-float>
+		</div>
+		<div layout="row">
 			<md-text-float label="Pack Name" ng-model="registration.packName"></md-text-float>
+		</div>
+		<h3>Contact Leader information</h3>
+		<div layout="row">
+			<md-text-float label="First Name" ng-model="registration.contactLeaderFirstName"></md-text-float>
+			<md-text-float label="Last Name" ng-model="registration.contactLeaderLastName"></md-text-float>
 		</div>
 		<div layout="row">
 			<md-text-float label="Email" ng-model="registration.contactLeaderEmail"></md-text-float>
+			<md-text-float label="Phone Number" ng-model="registration.contactLeaderPhoneNumber"></md-text-float>
+		</div>
+		<div layout="row">
+			<md-text-float label="Address 1" ng-model="registration.contactLeaderAddress.address1"></md-text-float>
+			<md-text-float label="Address 2" ng-model="registration.contactLeaderAddress.address2"></md-text-float>
+		</div>
+		<div layout="row">
+			<md-text-float label="City" ng-model="registration.contactLeaderAddress.city"></md-text-float>
+			<md-text-float label="Province" ng-model="registration.contactLeaderAddress.province"></md-text-float>
+		</div>
+		<div layout="row">
+			<md-text-float label="Postal Code" ng-model="registration.contactLeaderAddress.postalCode"></md-text-float>
 		</div>
 		<md-button class="md-raised md-primary" ng-click="submitRegistration();">Submit registration</md-button>
 	</form>
