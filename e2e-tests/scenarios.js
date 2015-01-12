@@ -20,7 +20,7 @@ describe('my app', function() {
 
     it('should render the registration form when user navigates to /register', function() {
       expect(element.all(by.css('[ng-view] h2')).first().getText()).
-        toMatch('Pre-registration form');
+        toMatch('Group preregistration');
     });
 
   });
