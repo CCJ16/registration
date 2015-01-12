@@ -172,5 +172,5 @@ func registerGroupPreRegistrationHandler(r *mux.Router, db *bolt.DB) {
 		db: prdb,
 	}
 
-	r.HandleFunc("/prereg", preRegHandler.Create).Methods("POST")
+	r.HandleFunc("/preregistration", preRegHandler.Create).Methods("POST")
 }
