@@ -19,13 +19,13 @@ describe('ccj16reg.registration module', function() {
 	describe('registration service', function() {
 		describe('registration model', function() {
 			it('should give a useful model', function() {
-				var newReg = registration.new();
+				var newReg = new registration();
 				expect(newReg).toBeDefined();
-				expect(newReg.save).not.toBeNull();
+				expect(newReg.$save).not.toBeNull();
 			});
 
 			it('that will save itself to a new object on save()', function() {
-				var newReg = registration.new();
+				var newReg = new registration();
 				newReg.council = "A council";
 				newReg.groupName = "4th Group";
 				newReg.packName = "Pack G";
@@ -33,7 +33,7 @@ describe('ccj16reg.registration module', function() {
 
 				$httpBackend.expectPOST('/api/preregistration', angular.toJson(newReg)).respond(201, '');
 
-				newReg.save().then(function() {}, function(message) {
+				newReg.$save().then(function() {}, function(message) {
 					console.log(message);
 					expect(false).toBe(true);
 				});

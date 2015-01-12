@@ -10,7 +10,7 @@ angular.module('ccj16reg.view.register', ['ngRoute', 'ngMaterial', 'ccj16reg.reg
 }])
 
 .controller('RegisterCtrl', ['$scope', '$location', '$mdDialog', 'registration', function($scope, $location, $mdDialog, registration) {
-	$scope.registration = registration.new();
+	$scope.registration = new registration();
 
 	$scope.submitRegistration = function(ev) {
 		var progressDialog = $mdDialog.show({
@@ -18,9 +18,9 @@ angular.module('ccj16reg.view.register', ['ngRoute', 'ngMaterial', 'ccj16reg.reg
 			targetEvent: ev,
 			clickOutsideToClose: false,
 		});
-		$scope.registration.save().then(function(data) {
+		$scope.registration.$save().then(function(reg) {
 			$mdDialog.hide();
-			$location.path('/registration/' + data.securityKey)
+			$location.path('/registration/' + reg.securityKey)
 		}, function(msg) {
 			$mdDialog.hide();
 			$mdDialog.show(
