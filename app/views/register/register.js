@@ -9,10 +9,15 @@ angular.module('ccj16reg.view.register', ['ngRoute', 'ccj16reg.registration'])
 	});
 }])
 
-.controller('RegisterCtrl', ['$scope', 'registration', function($scope, registration) {
+.controller('RegisterCtrl', ['$scope', '$mdDialog', 'registration', function($scope, $mdDialog, registration) {
 	$scope.registration = registration.new();
 
-	$scope.submitRegistration = function() {
+	$scope.submitRegistration = function(ev) {
+		$mdDialog.show({
+			templateUrl: 'views/register/pending_submit.html',
+			targetEvent: ev,
+			clickOutsideToClose: false,
+		});
 		$scope.registration.save();
 	};
 }]);
