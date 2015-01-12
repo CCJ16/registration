@@ -12,6 +12,7 @@ import (
 	"os"
 
 	"github.com/boltdb/bolt"
+	"github.com/gorilla/mux"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -43,9 +44,7 @@ func TestPreRegCreateRequest(t *testing.T) {
 		}
 
 		prdb := &testPreRegDb{}
-		prh := PreRegHandler{
-			db: prdb,
-		}
+		prh := NewGroupPreRegistrationHandler(mux.NewRouter(), prdb)
 
 		Convey("When given a good record", func() {
 			r, err := http.NewRequest("POST", "http://localhost:8080/prereg", &goodRecordBody)
@@ -58,6 +57,12 @@ func TestPreRegCreateRequest(t *testing.T) {
 
 			Convey("Should receive back a 201 status code", func() {
 				So(w.Code, ShouldEqual, 201)
+			})
+
+			Convey("Should receive back a valid location for the resource", func() {
+				newRec := GroupPreRegistration{}
+				So(json.NewDecoder(w.Body).Decode(&newRec), ShouldBeNil)
+				So(w.HeaderMap["Location"], ShouldResemble, []string{"/preregistration/" + string(newRec.SecurityKey)})
 			})
 
 			Convey("Should get back the same object with a new security key", func() {
@@ -125,7 +130,7 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 
 			Convey("Should set a security key", func() {
 				So(rec.SecurityKey, ShouldNotBeNil)
-				So(len(rec.SecurityKey), ShouldEqual, 128)
+				So(len(rec.SecurityKey), ShouldEqual, 129/3*4) // Length of key once converted to base64
 			})
 
 			Convey("Should make it available in bolt", func() {

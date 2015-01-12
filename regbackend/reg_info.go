@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"strings"
 
@@ -32,7 +33,7 @@ type Address struct {
 }
 
 type GroupPreRegistration struct {
-	SecurityKey []byte `json:"securityKey"`
+	SecurityKey string `json:"securityKey"`
 
 	PackName  string `json:"packName"`
 	GroupName string `json:"groupName"`
@@ -45,7 +46,7 @@ type GroupPreRegistration struct {
 
 	ContactLeaderEmail string    `json:"contactLeaderEmail"`
 	ValidatedOn        time.Time `json:"-"`
-	ValidationToken    []byte    `json:"-"`
+	ValidationToken    string    `json:"-"`
 
 	EmailConfirmationLastSent     time.Time `json:"-"`
 	EmailConfirmationSendAttempts int       `json:"-"`
@@ -55,10 +56,14 @@ type GroupPreRegistration struct {
 }
 
 func (gpr GroupPreRegistration) Key() []byte {
-	if len(gpr.SecurityKey) != 128 {
+	key, err := base64.URLEncoding.DecodeString(gpr.SecurityKey)
+	if err != nil {
+		panic("Invalid key")
+	}
+	if len(key) < 129 {
 		panic("Security was too short")
 	}
-	return gpr.SecurityKey
+	return key
 }
 
 func (gpr GroupPreRegistration) OrganicKey() string {
@@ -66,22 +71,22 @@ func (gpr GroupPreRegistration) OrganicKey() string {
 }
 
 func (gpr *GroupPreRegistration) PrepareForInsert() error {
-	if gpr.SecurityKey != nil {
+	if len(gpr.SecurityKey) != 0 {
 		return RecordAlreadyPrepared.New("Security key has already been created, bailing out")
 	}
 	{
-		var random [128]byte
+		var random [129]byte
 		if _, err := rand.Read(random[:]); err != nil {
 			return err
 		}
-		gpr.SecurityKey = random[:]
+		gpr.SecurityKey = base64.URLEncoding.EncodeToString(random[:])
 	}
 	{
-		var random [128]byte
+		var random [129]byte
 		if _, err := rand.Read(random[:]); err != nil {
 			return err
 		}
-		gpr.ValidationToken = random[:]
+		gpr.ValidationToken = base64.URLEncoding.EncodeToString(random[:])
 	}
 
 	return nil
@@ -168,7 +173,8 @@ func (d *preRegDbBolt) init() error {
 }
 
 type PreRegHandler struct {
-	db PreRegDb
+	db         PreRegDb
+	getHandler *mux.Route
 }
 
 func (h *PreRegHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -190,19 +196,24 @@ func (h *PreRegHandler) Create(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to insert record", 500)
 			return
 		}
+		url, err := h.getHandler.URLPath("id", input.SecurityKey)
+		if err != nil {
+			http.Error(w, "Failed to insert record", 500)
+			return
+		}
+		w.Header()["Location"] = []string{url.Path}
 		w.WriteHeader(http.StatusCreated)
 		io.Copy(w, buf)
 	}
 }
 
-func registerGroupPreRegistrationHandler(r *mux.Router, db *bolt.DB) {
-	prdb, err := NewPreRegBoltDb(db)
-	if err != nil {
-		log.Fatal(err)
-	}
-	preRegHandler := PreRegHandler{
+func NewGroupPreRegistrationHandler(r *mux.Router, prdb PreRegDb) *PreRegHandler {
+	preRegHandler := &PreRegHandler{
 		db: prdb,
 	}
 
 	r.HandleFunc("/preregistration", preRegHandler.Create).Methods("POST")
+	preRegHandler.getHandler = r.HandleFunc("/preregistration/{id}", nil).Methods("GET")
+
+	return preRegHandler
 }

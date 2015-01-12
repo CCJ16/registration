@@ -12,12 +12,16 @@ func main() {
 	r := mux.NewRouter()
 	apiR := r.PathPrefix("/api/").Subrouter()
 
-	db, err := bolt.Open("records.bolt", 0600, &bolt.Options{ Timeout: 1 })
+	db, err := bolt.Open("records.bolt", 0600, &bolt.Options{Timeout: 1})
 	if err != nil {
 		log.Fatalf("Failed to open bolt database, err: %s", err)
 	}
 
-	registerGroupPreRegistrationHandler(apiR, db)
+	gprdb, err := NewPreRegBoltDb(db)
+	if err != nil {
+		log.Fatalf("Failed to get group preregistration database started, err %s", err)
+	}
+	NewGroupPreRegistrationHandler(apiR, gprdb)
 
 	http.Handle("/api/", r)
 	http.Handle("/", http.FileServer(http.Dir("../app")))
