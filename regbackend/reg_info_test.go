@@ -29,6 +29,15 @@ func (db *testPreRegDb) CreateRecord(in *GroupPreRegistration) error {
 	return nil
 }
 
+func (d *testPreRegDb) GetRecord(securityKey string) (rec *GroupPreRegistration, err error) {
+	for _, rec := range d.entries {
+		if rec.SecurityKey == securityKey {
+			return &rec, nil
+		}
+	}
+	return nil, RecordDoesNotExist.New("Record with given key (%s) does not exist.", securityKey)
+}
+
 func TestPreRegCreateRequest(t *testing.T) {
 	Convey("Starting with a Group Pre Registration handler", t, func() {
 		goodRecord := GroupPreRegistration{
@@ -44,16 +53,17 @@ func TestPreRegCreateRequest(t *testing.T) {
 		}
 
 		prdb := &testPreRegDb{}
-		prh := NewGroupPreRegistrationHandler(mux.NewRouter(), prdb)
+		router := mux.NewRouter()
+		prh := NewGroupPreRegistrationHandler(router, prdb)
 
 		Convey("When given a good record", func() {
-			r, err := http.NewRequest("POST", "http://localhost:8080/prereg", &goodRecordBody)
+			r, err := http.NewRequest("POST", "http://localhost:8080/preregistration", &goodRecordBody)
 			if err != nil {
 				t.Fatal(err)
 			}
 			w := httptest.NewRecorder()
 
-			prh.Create(w, r)
+			router.ServeHTTP(w, r)
 
 			Convey("Should receive back a 201 status code", func() {
 				So(w.Code, ShouldEqual, 201)
@@ -63,6 +73,26 @@ func TestPreRegCreateRequest(t *testing.T) {
 				newRec := GroupPreRegistration{}
 				So(json.NewDecoder(w.Body).Decode(&newRec), ShouldBeNil)
 				So(w.HeaderMap["Location"], ShouldResemble, []string{"/preregistration/" + string(newRec.SecurityKey)})
+				location := w.HeaderMap["Location"][0]
+				Convey("And fetching that location will return the same record back", func() {
+					r, err := http.NewRequest("GET", "http://localhost:8080"+location, nil)
+					if err != nil {
+						t.Fatal(err)
+					}
+					w := httptest.NewRecorder()
+
+					router.ServeHTTP(w, r)
+
+					Convey("with a 200 status code", func() {
+						So(w.Code, ShouldEqual, 200)
+					})
+
+					Convey("With the same object back", func() {
+						getRec := GroupPreRegistration{}
+						So(json.NewDecoder(w.Body).Decode(&getRec), ShouldBeNil)
+						So(getRec, ShouldResemble, newRec)
+					})
+				})
 			})
 
 			Convey("Should get back the same object with a new security key", func() {
@@ -71,6 +101,9 @@ func TestPreRegCreateRequest(t *testing.T) {
 				So(newRec.SecurityKey, ShouldNotBeEmpty)
 				goodRecord.SecurityKey = newRec.SecurityKey
 				So(newRec, ShouldResemble, goodRecord)
+				Convey("With a matching security key to the database", func() {
+					So(prdb.entries[0].SecurityKey, ShouldEqual, newRec.SecurityKey)
+				})
 			})
 
 			Convey("Should be inserted into the database", func() {
@@ -158,6 +191,12 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 						return nil
 					}), ShouldBeNil)
 					So(data, ShouldResemble, rec.Key())
+				})
+
+				Convey("And fetchable through the api", func() {
+					fetchedRec, err := prdb.GetRecord(rec.SecurityKey)
+					So(err, ShouldBeNil)
+					So(*fetchedRec, ShouldResemble, rec)
 				})
 			})
 

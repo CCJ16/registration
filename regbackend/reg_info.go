@@ -94,11 +94,13 @@ func (gpr *GroupPreRegistration) PrepareForInsert() error {
 
 type PreRegDb interface {
 	CreateRecord(rec *GroupPreRegistration) error
+	GetRecord(securityKey string) (rec *GroupPreRegistration, err error)
 }
 
 var (
 	DBError               = errors.NewClass("Database Error")
 	RecordAlreadyPrepared = DBError.NewClass("Group preregistration is already prepared")
+	RecordDoesNotExist    = DBError.NewClass("Record does not exist")
 	GroupAlreadyCreated   = DBError.NewClass("Group already exists")
 )
 
@@ -157,6 +159,28 @@ func (d *preRegDbBolt) CreateRecord(in *GroupPreRegistration) error {
 	})
 }
 
+func (d *preRegDbBolt) GetRecord(securityKey string) (rec *GroupPreRegistration, err error) {
+	return rec, d.db.View(func(tx *bolt.Tx) error {
+		gb := tx.Bucket(BOLT_GROUPBUCKET)
+		key, err := base64.URLEncoding.DecodeString(securityKey)
+		if err != nil {
+			return err
+		}
+		data := gb.Get(key)
+		if data == nil {
+			return RecordDoesNotExist.New("Record for key %s does not exist", securityKey)
+		}
+		decoder := gob.NewDecoder(bytes.NewReader(data))
+		var res GroupPreRegistration
+		if err = decoder.Decode(&res); err != nil {
+			return err
+		} else {
+			rec = &res
+			return nil
+		}
+	})
+}
+
 func (d *preRegDbBolt) init() error {
 	return d.db.Update(func(tx *bolt.Tx) error {
 		if _, err := tx.CreateBucketIfNotExists(BOLT_GROUPBUCKET); err != nil {
@@ -196,7 +220,7 @@ func (h *PreRegHandler) Create(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to insert record", 500)
 			return
 		}
-		url, err := h.getHandler.URLPath("id", input.SecurityKey)
+		url, err := h.getHandler.URLPath("SecurityKey", input.SecurityKey)
 		if err != nil {
 			http.Error(w, "Failed to insert record", 500)
 			return
@@ -207,13 +231,34 @@ func (h *PreRegHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *PreRegHandler) Get(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	securityKey, ok := vars["SecurityKey"]
+	if !ok {
+		http.Error(w, "No key given", 404)
+		return
+	}
+	rec, err := h.db.GetRecord(securityKey)
+	if err != nil {
+		http.Error(w, "Failed to get record", 500)
+	} else {
+		buf := &bytes.Buffer{}
+		if err := json.NewEncoder(buf).Encode(rec); err != nil {
+			http.Error(w, "Failed to get record", 500)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		io.Copy(w, buf)
+	}
+}
+
 func NewGroupPreRegistrationHandler(r *mux.Router, prdb PreRegDb) *PreRegHandler {
 	preRegHandler := &PreRegHandler{
 		db: prdb,
 	}
 
 	r.HandleFunc("/preregistration", preRegHandler.Create).Methods("POST")
-	preRegHandler.getHandler = r.HandleFunc("/preregistration/{id}", nil).Methods("GET")
+	preRegHandler.getHandler = r.HandleFunc("/preregistration/{SecurityKey:[a-zA-Z0-9-_]+}", preRegHandler.Get).Methods("GET")
 
 	return preRegHandler
 }
