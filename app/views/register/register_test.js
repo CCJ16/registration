@@ -1,13 +1,12 @@
 'use strict';
 
-describe('ccj16reg.view.register module', function() {
+describe('In the register view module', function() {
 
 	beforeEach(module('ccj16reg.view.register'));
 
-	describe('Register controller', function(){
+	describe('with the register controller', function(){
 
-		it('should ....', inject(function($controller, $rootScope) {
-			//spec body
+		it('should be creatable', inject(function($controller, $rootScope) {
 			var RegisterCtrl = $controller('RegisterCtrl', {'$scope': $rootScope });
 			expect(RegisterCtrl).toBeDefined();
 		}));

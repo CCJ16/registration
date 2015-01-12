@@ -13,7 +13,7 @@ angular.module('ccj16reg.registration', [])
 						return $q(function(resolve, reject) {
 							$http.post('/api/preregistration', angular.toJson(obj)).success(function(data, status) {
 								if (status == 201) {
-									resolve();
+									resolve(data);
 								} else {
 									reject("Failed to create object.");
 								}
