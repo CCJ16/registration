@@ -10,4 +10,10 @@ angular.module('ccj16reg', [
 ]).
 config(['$routeProvider', function($routeProvider) {
 	$routeProvider.otherwise({redirectTo: '/register'});
-}]);
+}])
+.config(function($mdThemingProvider) {
+	$mdThemingProvider.theme('default')
+		.primaryColor('yellow')
+		.accentColor('blue-grey')
+		.backgroundColor('grey');
+});

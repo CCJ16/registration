@@ -1,49 +1,93 @@
 <div layout="row" layout-align="center">
-	<md-card flex="66" layout="column">
-		<h2>Group preregistration</h2>
-		<div layout="row" layout-align="center">
-			<form layout="column">
-				<div layout="row">
-					<div layout="column">
-						<h3>Group information</h3>
-						<div layout="row">
-							<md-text-float label="Council" ng-model="registration.council"></md-text-float>
-							<md-text-float label="Group Name" ng-model="registration.groupName"></md-text-float>
+	<md-card flex="66">
+		<md-card-content>
+			<md-toolbar><h2 class="md-toolbar-tools"><span>Group preregistration</span></h2></md-toolbar>
+			<div layout="row" layout-align="center">
+				<form layout="column">
+					<div layout="row">
+						<div layout="column">
+							<h3>Group information</h3>
+							<div layout="row">
+								<md-input-container>
+									<label>Council</label>
+									<input type="text" ng-model="registration.council">
+								</md-input-container>
+								<md-input-container>
+									<label>Group Name</label>
+									<input type="text" ng-model="registration.groupName">
+								</md-input-container>
+							</div>
+							<div layout="row">
+								<md-input-container>
+									<label>Pack Name</label>
+									<input type="text" ng-model="registration.packName">
+								</md-input-container>
+							</div>
+							<h3>Estimated Participant counts</h3>
+							<div layout="row">
+								<md-input-container>
+									<label>Estimated Youth</label>
+									<input type="number" ng-model="registration.estimatedYouth">
+								</md-input-container>
+								<md-input-container>
+									<label>Estimated Leaders</label>
+									<input type="number" ng-model="registration.estimatedLeaders">
+								</md-input-container>
+							</div>
 						</div>
-						<div layout="row">
-							<md-text-float label="Pack Name" ng-model="registration.packName"></md-text-float>
-						</div>
-						<h3>Estimated Participant counts</h3>
-						<div layout="row">
-							<md-text-float type="number" label="Estimated Youth" ng-model="registration.estimatedYouth"></md-text-float>
-							<md-text-float type="number" label="Estimated Leaders" ng-model="registration.estimatedLeaders"></md-text-float>
+						<div layout="column">
+							<h3>Contact Leader information</h3>
+							<div layout="row">
+								<md-input-container>
+									<label>First Name</label>
+									<input type="text" ng-model="registration.contactLeaderFirstName">
+								</md-input-container>
+								<md-input-container>
+									<label>Last Name</label>
+									<input type="text" ng-model="registration.contactLeaderLastName">
+								</md-input-container>
+							</div>
+							<div layout="row">
+								<md-input-container>
+									<label>Email</label>
+									<input type="email" ng-model="registration.contactLeaderEmail">
+								</md-input-container>
+								<md-input-container>
+									<label>Phone Number</label>
+									<input type="tel" ng-model="registration.contactLeaderPhoneNumber">
+								</md-input-container>
+							</div>
+							<div layout="row">
+								<md-input-container>
+									<label>Address 1</label>
+									<input type="text" ng-model="registration.contactLeaderAddress.address1">
+								</md-input-container>
+								<md-input-container>
+									<label>Address 2</label>
+									<input type="text" ng-model="registration.contactLeaderAddress.address2">
+								</md-input-container>
+							</div>
+							<div layout="row">
+								<md-input-container>
+									<label>City</label>
+									<input type="text" ng-model="registration.contactLeaderAddress.city">
+								</md-input-container>
+								<md-input-container>
+									<label>Province</label>
+									<input type="text" ng-model="registration.contactLeaderAddress.province">
+								</md-input-container>
+							</div>
+							<div layout="row">
+								<md-input-container>
+									<label>Postal Code</label>
+									<input type="text" ng-model="registration.contactLeaderAddress.postalCode">
+								</md-input-container>
+							</div>
 						</div>
 					</div>
-					<div layout="column">
-						<h3>Contact Leader information</h3>
-						<div layout="row">
-							<md-text-float label="First Name" ng-model="registration.contactLeaderFirstName"></md-text-float>
-							<md-text-float label="Last Name" ng-model="registration.contactLeaderLastName"></md-text-float>
-						</div>
-						<div layout="row">
-							<md-text-float type="email" label="Email" ng-model="registration.contactLeaderEmail"></md-text-float>
-							<md-text-float type="tel" label="Phone Number" ng-model="registration.contactLeaderPhoneNumber"></md-text-float>
-						</div>
-						<div layout="row">
-							<md-text-float label="Address 1" ng-model="registration.contactLeaderAddress.address1"></md-text-float>
-							<md-text-float label="Address 2" ng-model="registration.contactLeaderAddress.address2"></md-text-float>
-						</div>
-						<div layout="row">
-							<md-text-float label="City" ng-model="registration.contactLeaderAddress.city"></md-text-float>
-							<md-text-float label="Province" ng-model="registration.contactLeaderAddress.province"></md-text-float>
-						</div>
-						<div layout="row">
-							<md-text-float label="Postal Code" ng-model="registration.contactLeaderAddress.postalCode"></md-text-float>
-						</div>
-					</div>
-				</div>
-				<md-button class="md-raised md-primary" ng-click="submitRegistration();">Submit registration</md-button>
-			</form>
-		</div>
+					<md-button class="md-raised md-primary" ng-click="submitRegistration();">Submit registration</md-button>
+				</form>
+			</div>
+		</md-card-content>
 	</md-card>
 </div>
