@@ -13,22 +13,26 @@ angular.module('ccj16reg.view.register', ['ngRoute', 'ngMaterial', 'ccj16reg.reg
 	$scope.registration = new registration();
 
 	$scope.submitRegistration = function(ev) {
-		var progressDialog = $mdDialog.show({
+		$mdDialog.show({
 			templateUrl: 'views/register/pending_submit.html',
 			targetEvent: ev,
 			clickOutsideToClose: false,
+			escapeToClose: false,
+			onComplete: submitSaveRequest,
 		});
-		$scope.registration.$save().then(function(reg) {
-			$mdDialog.hide();
-			$location.path('/registration/' + reg.securityKey)
-		}, function(msg) {
-			$mdDialog.hide();
-			$mdDialog.show(
-				$mdDialog.alert()
-					.title('Failed to insert record')
-					.content('Server message: ' + msg)
-					.ok('OK')
-			);
-		});
+		function submitSaveRequest() {
+			$scope.registration.$save().then(function(reg) {
+				$mdDialog.hide();
+				$location.path('/registration/' + reg.securityKey)
+			}, function(msg) {
+				$mdDialog.hide();
+				$mdDialog.show(
+					$mdDialog.alert()
+						.title('Failed to insert record')
+						.content('Server message: ' + msg)
+						.ok('OK')
+				);
+			});
+		}
 	};
 }]);
