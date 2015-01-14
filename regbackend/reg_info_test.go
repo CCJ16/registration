@@ -19,21 +19,21 @@ import (
 )
 
 type testPreRegDb struct {
-	entries []GroupPreRegistration
+	entries [][]GroupPreRegistration
 }
 
 func (db *testPreRegDb) CreateRecord(in *GroupPreRegistration) error {
 	if err := in.PrepareForInsert(); err != nil {
 		return err
 	}
-	db.entries = append(db.entries, *in)
+	db.entries = append(db.entries, []GroupPreRegistration{*in})
 	return nil
 }
 
 func (d *testPreRegDb) GetRecord(securityKey string) (rec *GroupPreRegistration, err error) {
 	for _, rec := range d.entries {
-		if rec.SecurityKey == securityKey {
-			return &rec, nil
+		if rec[0].SecurityKey == securityKey {
+			return &rec[len(rec)-1], nil
 		}
 	}
 	return nil, RecordDoesNotExist.New("Record with given key (%s) does not exist.", securityKey)
@@ -106,17 +106,18 @@ func TestPreRegCreateRequest(t *testing.T) {
 				newRec.EmailApprovalGivenAt = goodRecord.EmailApprovalGivenAt;
 				So(newRec, ShouldResemble, goodRecord)
 				Convey("With a matching security key to the database", func() {
-					So(prdb.entries[0].SecurityKey, ShouldEqual, newRec.SecurityKey)
+					So(prdb.entries[0][0].SecurityKey, ShouldEqual, newRec.SecurityKey)
 				})
 			})
 
 			Convey("Should be inserted into the database", func() {
 				So(len(prdb.entries), ShouldEqual, 1)
-				goodRecord.SecurityKey = prdb.entries[0].SecurityKey
-				goodRecord.ValidationToken = prdb.entries[0].ValidationToken
-				So(prdb.entries[0].EmailApprovalGivenAt, ShouldHappenWithin, time.Second, goodRecord.EmailApprovalGivenAt)
-				prdb.entries[0].EmailApprovalGivenAt = goodRecord.EmailApprovalGivenAt;
-				So(prdb.entries[0], ShouldResemble, goodRecord)
+				So(len(prdb.entries[0]), ShouldEqual, 1)
+				goodRecord.SecurityKey = prdb.entries[0][0].SecurityKey
+				goodRecord.ValidationToken = prdb.entries[0][0].ValidationToken
+				So(prdb.entries[0][0].EmailApprovalGivenAt, ShouldHappenWithin, time.Second, goodRecord.EmailApprovalGivenAt)
+				prdb.entries[0][0].EmailApprovalGivenAt = goodRecord.EmailApprovalGivenAt;
+				So(prdb.entries[0][0], ShouldResemble, goodRecord)
 			})
 		})
 
@@ -175,7 +176,17 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 			Convey("Should make it available in bolt", func() {
 				record := GroupPreRegistration{}
 				So(db.View(func(tx *bolt.Tx) error {
-					data := tx.Bucket(BOLT_GROUPBUCKET).Get(rec.Key())
+					bucket := tx.Bucket(BOLT_GROUPBUCKET).Bucket(rec.Key())
+					So(bucket, ShouldNotBeNil)
+					size := 0
+					var data []byte
+					So(bucket.ForEach(func(k, v []byte) error {
+						size++
+						So(v, ShouldNotBeNil)
+						data = v
+						return nil
+					}), ShouldBeNil)
+					So(size, ShouldEqual, 1)
 					decoder := gob.NewDecoder(bytes.NewReader(data))
 					return decoder.Decode(&record)
 				}), ShouldBeNil)

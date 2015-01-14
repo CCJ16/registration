@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/rand"
+	"encoding/binary"
 	"encoding/base64"
 	"fmt"
 	"strings"
@@ -23,6 +24,7 @@ import (
 )
 
 const keyLength = 24
+
 type PhoneNumber string
 
 type Address struct {
@@ -148,9 +150,20 @@ func (d *preRegDbBolt) CreateRecord(in *GroupPreRegistration) error {
 			if err := encoder.Encode(in); err != nil {
 				return err
 			}
-			if err := gb.Put(in.Key(), data.Bytes()); err != nil {
+			if bucket, err := gb.CreateBucketIfNotExists(in.Key()); err != nil {
 				return err
+			} else if nextInt, err := bucket.NextSequence(); err != nil {
+				return err
+			} else {
+				buf := new(bytes.Buffer)
+				if err = binary.Write(buf, binary.BigEndian, nextInt); err != nil {
+					return err
+				} else if err = bucket.Put(buf.Bytes(), data.Bytes()); err != nil {
+					return err
+				}
 			}
+
+
 			if err := gnmb.Put([]byte(in.OrganicKey()), in.Key()); err != nil {
 				return err
 			}
@@ -169,7 +182,11 @@ func (d *preRegDbBolt) GetRecord(securityKey string) (rec *GroupPreRegistration,
 		if err != nil {
 			return err
 		}
-		data := gb.Get(key)
+		bucket := gb.Bucket(key)
+		if bucket == nil {
+			return RecordDoesNotExist.New("Record for key %s does not exist", securityKey)
+		}
+		_, data := bucket.Cursor().Last()
 		if data == nil {
 			return RecordDoesNotExist.New("Record for key %s does not exist", securityKey)
 		}
