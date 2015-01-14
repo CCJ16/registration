@@ -13,9 +13,18 @@ config(['$routeProvider', function($routeProvider) {
 }])
 .config(function($mdThemingProvider) {
 	$mdThemingProvider.theme('default')
-		.primaryColor('yellow')
-		.accentColor('blue-grey')
-		.backgroundColor('grey');
+		.primaryColor('yellow', {
+			'default': '500',
+			'hue-1': 'A200',
+			'hue-2': 'A400',
+			'hue-3': '400',
+		})
+		.accentColor('red', {
+			'default': '900',
+		})
+		.backgroundColor('grey', {
+			'default': '100',
+		});
 })
 
 .controller('CtrlApp', function($scope) {
