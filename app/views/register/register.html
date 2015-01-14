@@ -28,11 +28,11 @@
 							<div layout="row">
 								<md-input-container>
 									<label>Estimated Youth</label>
-									<input type="number" ng-model="registration.estimatedYouth">
+									<input type="number" ng-model="registration.estimatedYouth" min="0" max="50" step="1">
 								</md-input-container>
 								<md-input-container>
 									<label>Estimated Leaders</label>
-									<input type="number" ng-model="registration.estimatedLeaders">
+									<input type="number" ng-model="registration.estimatedLeaders" min="0" max="15" step="1">
 								</md-input-container>
 							</div>
 						</div>
@@ -86,7 +86,7 @@
 							</div>
 						</div>
 					</div>
-					<div layout="row"><md-checkbox ng-model="registrationTosAccepted">I agree to receive emails from the CCJ16 team about the Cub Jamboree. (Required) </md-checkbox><md-button ng-click="showEmailTos($event)">Details</md-button></div>
+					<div layout="row"><md-checkbox ng-model="registrationTosAccepted">I agree to receive emails from the CCJ16 team about the Cub Jamboree. (Required) </md-checkbox><md-button class="md-accent" ng-click="showEmailTos($event)">Details</md-button></div>
 					<md-button class="md-raised md-primary" ng-click="submitRegistration();" ng-disabled="!registrationTosAccepted">Submit registration</md-button>
 				</form>
 			</div>
