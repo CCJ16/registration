@@ -230,5 +230,14 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 				So(GroupAlreadyCreated.Contains(prdb.CreateRecord(&duprec)), ShouldBeTrue)
 			})
 		})
+		Convey("Fetching a missing record", func() {
+			fetchedRec, err := prdb.GetRecord("aaaa")
+			Convey("Should return a nil record", func() {
+				So(fetchedRec, ShouldBeNil);
+			});
+			Convey("Should return a record not found error", func() {
+				So(RecordDoesNotExist.Contains(err), ShouldBeTrue);
+			});
+		});
 	})
 }
