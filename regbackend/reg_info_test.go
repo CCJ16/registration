@@ -169,7 +169,7 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 
 			Convey("Should set a security key", func() {
 				So(rec.SecurityKey, ShouldNotBeNil)
-				So(len(rec.SecurityKey), ShouldEqual, 129/3*4) // Length of key once converted to base64
+				So(len(rec.SecurityKey), ShouldEqual, keyLength/3*4) // Length of key once converted to base64
 			})
 
 			Convey("Should make it available in bolt", func() {

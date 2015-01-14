@@ -22,6 +22,7 @@ import (
 	"github.com/spacemonkeygo/errors"
 )
 
+const keyLength = 24
 type PhoneNumber string
 
 type Address struct {
@@ -62,7 +63,7 @@ func (gpr GroupPreRegistration) Key() []byte {
 	if err != nil {
 		panic("Invalid key")
 	}
-	if len(key) < 129 {
+	if len(key) < keyLength {
 		panic("Security was too short")
 	}
 	return key
@@ -77,14 +78,14 @@ func (gpr *GroupPreRegistration) PrepareForInsert() error {
 		return RecordAlreadyPrepared.New("Security key has already been created, bailing out")
 	}
 	{
-		var random [129]byte
+		var random [keyLength]byte
 		if _, err := rand.Read(random[:]); err != nil {
 			return err
 		}
 		gpr.SecurityKey = base64.URLEncoding.EncodeToString(random[:])
 	}
 	{
-		var random [129]byte
+		var random [keyLength]byte
 		if _, err := rand.Read(random[:]); err != nil {
 			return err
 		}
