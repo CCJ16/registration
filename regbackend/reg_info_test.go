@@ -102,6 +102,8 @@ func TestPreRegCreateRequest(t *testing.T) {
 				So(json.NewDecoder(w.Body).Decode(&newRec), ShouldBeNil)
 				So(newRec.SecurityKey, ShouldNotBeEmpty)
 				goodRecord.SecurityKey = newRec.SecurityKey
+				So(newRec.EmailApprovalGivenAt, ShouldHappenWithin, time.Second, goodRecord.EmailApprovalGivenAt)
+				newRec.EmailApprovalGivenAt = goodRecord.EmailApprovalGivenAt;
 				So(newRec, ShouldResemble, goodRecord)
 				Convey("With a matching security key to the database", func() {
 					So(prdb.entries[0].SecurityKey, ShouldEqual, newRec.SecurityKey)
@@ -112,6 +114,8 @@ func TestPreRegCreateRequest(t *testing.T) {
 				So(len(prdb.entries), ShouldEqual, 1)
 				goodRecord.SecurityKey = prdb.entries[0].SecurityKey
 				goodRecord.ValidationToken = prdb.entries[0].ValidationToken
+				So(prdb.entries[0].EmailApprovalGivenAt, ShouldHappenWithin, time.Second, goodRecord.EmailApprovalGivenAt)
+				prdb.entries[0].EmailApprovalGivenAt = goodRecord.EmailApprovalGivenAt;
 				So(prdb.entries[0], ShouldResemble, goodRecord)
 			})
 		})
