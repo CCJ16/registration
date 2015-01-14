@@ -3,3 +3,18 @@
 .progress-dialog md-progress-circular {
 	margin: auto;
 }
+
+.form-redisplay {
+	padding: 16px;
+}
+
+.form-redisplay h4 {
+	margin: 0px 0px 3px;
+	font-weight: 400;
+	font-size: 0.8em;
+}
+
+.form-redisplay p {
+	margin: 0px;
+	text-align: center;
+}
