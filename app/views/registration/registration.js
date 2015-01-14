@@ -10,5 +10,7 @@ angular.module('ccj16reg.view.registration', ['ngRoute', 'ngMaterial', 'ccj16reg
 }])
 
 .controller('RegistrationCtrl', function($scope, $routeParams, registration) {
-	$scope.registration = registration.get({securityKey: $routeParams.securityKey})
+	$scope.registration = registration.get({securityKey: $routeParams.securityKey}, function(registration) {
+		$scope.$emit('CurrentGroupInformationChanged', registration);
+	});
 });

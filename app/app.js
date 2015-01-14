@@ -16,4 +16,17 @@ config(['$routeProvider', function($routeProvider) {
 		.primaryColor('yellow')
 		.accentColor('blue-grey')
 		.backgroundColor('grey');
+})
+
+.controller('CtrlApp', function($scope) {
+	$scope.packDisplayName = '';
+	$scope.$on('CurrentGroupInformationChanged', function(event, registration) {
+		$scope.packDisplayName = " - " + registration.groupName + " of " + registration.council;
+		if (registration.packName) {
+			$scope.packDisplayName += " (" + registration.packName + ")";
+		}
+	});
+	$scope.$on('$locationChangeSuccess', function() {
+		$scope.packDisplayName = '';
+	});
 });
