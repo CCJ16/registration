@@ -12,6 +12,10 @@ angular.module('ccj16reg.view.register', ['ngRoute', 'ngMaterial', 'ccj16reg.reg
 .controller('RegisterCtrl', ['$scope', '$location', '$mdDialog', 'registration', function($scope, $location, $mdDialog, registration) {
 	$scope.registration = new registration();
 
+	$scope.$watch('registration.agreedToEmailTerms()', function(checked) {
+		$scope.registrationTosAccepted = checked;
+	});
+
 	$scope.showEmailTos = function(ev) {
 		ev.preventDefault()
 		ev.stopPropagation();

@@ -48,6 +48,8 @@ type GroupPreRegistration struct {
 	ValidatedOn        time.Time `json:"-"`
 	ValidationToken    string    `json:"-"`
 
+	EmailApprovalGivenAt time.Time `json:"emailApprovalGivenAt,omit"`
+
 	EmailConfirmationLastSent     time.Time `json:"-"`
 	EmailConfirmationSendAttempts int       `json:"-"`
 

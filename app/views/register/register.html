@@ -86,7 +86,7 @@
 							</div>
 						</div>
 					</div>
-					<div layout="row"><md-checkbox ng-model="registrationTosAccepted">I agree to receive emails from the CCJ16 team about the Cub Jamboree. (Required) </md-checkbox><md-button class="md-accent" ng-click="showEmailTos($event)">Details</md-button></div>
+					<div layout="row"><md-checkbox ng-model="registration.agreedToEmailTerms" ng-model-options="{getterSetter: true}">I agree to receive emails from the CCJ16 team about the Cub Jamboree. (Required) </md-checkbox><md-button class="md-accent" ng-click="showEmailTos($event)">Details</md-button></div>
 					<md-button class="md-raised md-primary" ng-click="submitRegistration();" ng-disabled="!registrationTosAccepted">Submit registration</md-button>
 				</form>
 			</div>

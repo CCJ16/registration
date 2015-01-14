@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"encoding/gob"
 	"io/ioutil"
@@ -41,9 +42,10 @@ func (d *testPreRegDb) GetRecord(securityKey string) (rec *GroupPreRegistration,
 func TestPreRegCreateRequest(t *testing.T) {
 	Convey("Starting with a Group Pre Registration handler", t, func() {
 		goodRecord := GroupPreRegistration{
-			PackName:  "Pack A",
-			GroupName: "Test Group",
-			Council:   "1st Testingway",
+			PackName:             "Pack A",
+			GroupName:            "Test Group",
+			Council:              "1st Testingway",
+			EmailApprovalGivenAt: time.Now(),
 		}
 		goodRecordBody := bytes.Buffer{}
 		if bytes, err := json.Marshal(goodRecord); err != nil {

@@ -1,44 +1,131 @@
 'use strict';
 
 describe('ccj16reg.registration module', function() {
-	var $httpBackend, registration;
 
 	beforeEach(module('ccj16reg.registration'));
 
-	beforeEach(inject(function($injector, _registration_) {
-		$httpBackend = $injector.get('$httpBackend');
+	describe('registration service', function() {
+		var $httpBackend, registration, curDate = new Date();
 
-		registration = _registration_;
-	}))
+		beforeEach(function() {
+			module(function($provide) {
+				$provide.value('currentDateFetch', function() {
+					return curDate;
+				});
+			});
+		});
 
-	afterEach(function() {
-		$httpBackend.verifyNoOutstandingExpectation();
-		$httpBackend.verifyNoOutstandingRequest();
+		beforeEach(inject(function($injector, _registration_) {
+			$httpBackend = $injector.get('$httpBackend');
+
+			registration = _registration_;
+		}))
+
+		afterEach(function() {
+			$httpBackend.verifyNoOutstandingExpectation();
+			$httpBackend.verifyNoOutstandingRequest();
+		});
+		it('should give a useful model', function() {
+			var newReg = new registration();
+			expect(newReg).toBeDefined();
+			expect(newReg.$save).not.toBeNull();
+		});
+
+		describe('should have a working agreedToEmailTerms', function() {
+
+			it('should exist as a function', function() {
+				var newReg = new registration();
+				expect(newReg.agreedToEmailTerms).toBeDefined();
+			});
+
+			it('should return false for an empty object', function() {
+				var newReg = new registration();
+				expect(newReg.agreedToEmailTerms()).toBe(false);
+			});
+
+			it('should set the current (injected) date when set to true.', function() {
+				var newReg = new registration();
+				expect(newReg.agreedToEmailTerms(true)).toBe(true);
+				expect(newReg.emailApprovalGivenAt).toBe(curDate);
+			});
+
+			it('should keep the original time if asked to be true again.', function() {
+				var newReg = new registration();
+				expect(newReg.agreedToEmailTerms(true)).toBe(true);
+				expect(newReg.emailApprovalGivenAt).toBe(curDate);
+
+				var oldDate = curDate;
+				curDate = new Date();
+				expect(newReg.agreedToEmailTerms(true)).toBe(true);
+				expect(newReg.emailApprovalGivenAt).toBe(oldDate);
+			});
+
+			it('should get the current time if asked to be true after being false.', function() {
+				var newReg = new registration();
+				expect(newReg.agreedToEmailTerms(true)).toBe(true);
+				expect(newReg.emailApprovalGivenAt).toBe(curDate);
+
+				var oldDate = curDate;
+				curDate = new Date();
+
+				expect(newReg.agreedToEmailTerms(false)).toBe(false);
+				expect(newReg.agreedToEmailTerms(true)).toBe(true);
+				expect(newReg.emailApprovalGivenAt).toBe(curDate);
+			});
+
+			it('should stay undefined when set to being false.', function() {
+				var newReg = new registration();
+				expect(newReg.agreedToEmailTerms(false)).toBe(false);
+				expect(newReg.emailApprovalGivenAt).not.toBeDefined();
+			});
+
+			it('should set it back to undefined when set to being false.', function() {
+				var newReg = new registration();
+				expect(newReg.agreedToEmailTerms(true)).toBe(true);
+				expect(newReg.emailApprovalGivenAt).toBe(curDate);
+				expect(newReg.agreedToEmailTerms(false)).toBe(false);
+				expect(newReg.emailApprovalGivenAt).not.toBeDefined();
+			});
+		});
+
+		it('that will save itself to a new object on save()', function() {
+			var newReg = new registration();
+			newReg.council = "A council";
+			newReg.groupName = "4th Group";
+			newReg.packName = "Pack G";
+			newReg.contactLeaderEmail = "test@example.com";
+
+			$httpBackend.expectPOST('/api/preregistration', angular.toJson(newReg)).respond(201, '');
+
+			newReg.$save().then(function() {}, function(message) {
+				console.log(message);
+				expect(false).toBe(true);
+			});
+			$httpBackend.flush()
+		});
 	});
 
-	describe('registration service', function() {
-		describe('registration model', function() {
-			it('should give a useful model', function() {
-				var newReg = new registration();
-				expect(newReg).toBeDefined();
-				expect(newReg.$save).not.toBeNull();
-			});
+	describe('currentDateFetch service', function() {
+		var oldDateFunction, currentDateFetch;
+		var curDate = new Date();
+		var newDateFunction = function() {
+			return curDate;
+		}
 
-			it('that will save itself to a new object on save()', function() {
-				var newReg = new registration();
-				newReg.council = "A council";
-				newReg.groupName = "4th Group";
-				newReg.packName = "Pack G";
-				newReg.contactLeaderEmail = "test@example.com";
+		beforeEach(function() {
+			oldDateFunction = window.Date;
+			window.Date = newDateFunction;
+		});
+		afterEach(function() {
+			window.Date = oldDateFunction;
+		});
 
-				$httpBackend.expectPOST('/api/preregistration', angular.toJson(newReg)).respond(201, '');
+		beforeEach(inject(function(_currentDateFetch_) {
+			currentDateFetch = _currentDateFetch_;
+		}))
 
-				newReg.$save().then(function() {}, function(message) {
-					console.log(message);
-					expect(false).toBe(true);
-				});
-				$httpBackend.flush()
-			});
+		it('should return the current date', function() {
+			expect(currentDateFetch()).toBe(curDate);
 		});
 	});
 });
