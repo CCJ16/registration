@@ -21,7 +21,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to get group preregistration database started, err %s", err)
 	}
-	NewGroupPreRegistrationHandler(apiR, gprdb)
+
+	ces := NewConfirmationEmailService("cubjamboree.ca", "no-reply@cubjamboree.ca", "info@cubjamboree.ca", NewLocalMailder("localhost"), gprdb)
+
+	NewGroupPreRegistrationHandler(apiR, gprdb, ces)
 
 	http.Handle("/api/", r)
 	http.Handle("/", http.FileServer(http.Dir("../app")))

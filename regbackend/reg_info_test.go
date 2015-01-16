@@ -39,6 +39,23 @@ func (d *testPreRegDb) GetRecord(securityKey string) (rec *GroupPreRegistration,
 	return nil, RecordDoesNotExist.New("Record with given key (%s) does not exist.", securityKey)
 }
 
+func (d *testPreRegDb) NoteConfirmationEmailSent(gpr *GroupPreRegistration) error {
+	recLoc := -1
+	for i, rec := range d.entries {
+		if rec[0].SecurityKey == gpr.SecurityKey {
+			recLoc = i
+		}
+	}
+	if recLoc == -1 {
+		return RecordDoesNotExist.New("Record with given key (%s) does not exist.", gpr.SecurityKey)
+	}
+	rec := d.entries[recLoc][len(d.entries[recLoc])-1]
+	rec.EmailConfirmationSent = true
+	d.entries[recLoc] = append(d.entries[recLoc], rec)
+	gpr.EmailConfirmationSent = true
+	return nil
+}
+
 func TestPreRegCreateRequest(t *testing.T) {
 	Convey("Starting with a Group Pre Registration handler", t, func() {
 		goodRecord := GroupPreRegistration{
@@ -56,7 +73,9 @@ func TestPreRegCreateRequest(t *testing.T) {
 
 		prdb := &testPreRegDb{}
 		router := mux.NewRouter()
-		prh := NewGroupPreRegistrationHandler(router, prdb)
+		testEmailSender := &testEmailSender{}
+		ces := NewConfirmationEmailService("examplesite.com", "no-reply@examplesender.com", "info@infoexample.com", testEmailSender, prdb)
+		prh := NewGroupPreRegistrationHandler(router, prdb, ces)
 
 		Convey("When given a good record", func() {
 			r, err := http.NewRequest("POST", "http://localhost:8080/preregistration", &goodRecordBody)
@@ -103,7 +122,7 @@ func TestPreRegCreateRequest(t *testing.T) {
 				So(newRec.SecurityKey, ShouldNotBeEmpty)
 				goodRecord.SecurityKey = newRec.SecurityKey
 				So(newRec.EmailApprovalGivenAt, ShouldHappenWithin, time.Second, goodRecord.EmailApprovalGivenAt)
-				newRec.EmailApprovalGivenAt = goodRecord.EmailApprovalGivenAt;
+				newRec.EmailApprovalGivenAt = goodRecord.EmailApprovalGivenAt
 				So(newRec, ShouldResemble, goodRecord)
 				Convey("With a matching security key to the database", func() {
 					So(prdb.entries[0][0].SecurityKey, ShouldEqual, newRec.SecurityKey)
@@ -112,12 +131,22 @@ func TestPreRegCreateRequest(t *testing.T) {
 
 			Convey("Should be inserted into the database", func() {
 				So(len(prdb.entries), ShouldEqual, 1)
-				So(len(prdb.entries[0]), ShouldEqual, 1)
-				goodRecord.SecurityKey = prdb.entries[0][0].SecurityKey
-				goodRecord.ValidationToken = prdb.entries[0][0].ValidationToken
-				So(prdb.entries[0][0].EmailApprovalGivenAt, ShouldHappenWithin, time.Second, goodRecord.EmailApprovalGivenAt)
-				prdb.entries[0][0].EmailApprovalGivenAt = goodRecord.EmailApprovalGivenAt;
-				So(prdb.entries[0][0], ShouldResemble, goodRecord)
+				So(len(prdb.entries[0]), ShouldEqual, 2)
+				Convey("With the first record equal to second, modulo the email confirmation sent", func() {
+					tmpRec := prdb.entries[0][0]
+					tmpRec.EmailConfirmationSent = prdb.entries[0][1].EmailConfirmationSent
+					So(prdb.entries[0][1], ShouldResemble, tmpRec)
+				})
+				Convey("With the second record confirming the email sent", func() {
+					So(prdb.entries[0][1].EmailConfirmationSent, ShouldResemble, true)
+				})
+				Convey("And the first record matching the request, modulo the keys, and funky time business", func() {
+					goodRecord.SecurityKey = prdb.entries[0][0].SecurityKey
+					goodRecord.ValidationToken = prdb.entries[0][0].ValidationToken
+					So(prdb.entries[0][0].EmailApprovalGivenAt, ShouldHappenWithin, time.Second, goodRecord.EmailApprovalGivenAt)
+					prdb.entries[0][0].EmailApprovalGivenAt = goodRecord.EmailApprovalGivenAt
+					So(prdb.entries[0][0], ShouldResemble, goodRecord)
+				})
 			})
 		})
 
@@ -229,15 +258,52 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 				duprec.Council = "Other Council"
 				So(GroupAlreadyCreated.Contains(prdb.CreateRecord(&duprec)), ShouldBeTrue)
 			})
+
+			Convey("Noting a successful email conversion (with slightly modified data)", func() {
+				rec.ContactLeaderFirstName = "New Name"
+				err := prdb.NoteConfirmationEmailSent(&rec)
+				Convey("Without error", func() {
+					So(err, ShouldBeNil)
+				})
+				Convey("Should mark my copy as having been sent", func() {
+					So(rec.EmailConfirmationSent, ShouldEqual, true)
+					Convey("Without other modifications", func() {
+						So(rec.ContactLeaderFirstName, ShouldEqual, "New Name")
+					})
+				})
+				Convey("And update the database", func() {
+					record := GroupPreRegistration{}
+					So(db.View(func(tx *bolt.Tx) error {
+						bucket := tx.Bucket(BOLT_GROUPBUCKET).Bucket(rec.Key())
+						So(bucket, ShouldNotBeNil)
+						size := 0
+						var data []byte
+						So(bucket.ForEach(func(k, v []byte) error {
+							size++
+							So(v, ShouldNotBeNil)
+							data = v
+							return nil
+						}), ShouldBeNil)
+						Convey("By adding a new version", func() {
+							So(size, ShouldEqual, 2)
+						})
+						decoder := gob.NewDecoder(bytes.NewReader(data))
+						return decoder.Decode(&record)
+					}), ShouldBeNil)
+					Convey("And not update other fields", func() {
+						So(record.ContactLeaderFirstName, ShouldNotEqual, rec.ContactLeaderFirstName)
+					})
+				})
+			})
 		})
 		Convey("Fetching a missing record", func() {
 			fetchedRec, err := prdb.GetRecord("aaaa")
 			Convey("Should return a nil record", func() {
-				So(fetchedRec, ShouldBeNil);
-			});
+				So(fetchedRec, ShouldBeNil)
+			})
 			Convey("Should return a record not found error", func() {
-				So(RecordDoesNotExist.Contains(err), ShouldBeTrue);
-			});
-		});
+				So(RecordDoesNotExist.Contains(err), ShouldBeTrue)
+			})
+		})
 	})
 }

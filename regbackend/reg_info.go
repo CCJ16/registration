@@ -2,8 +2,8 @@ package main
 
 import (
 	"crypto/rand"
-	"encoding/binary"
 	"encoding/base64"
+	"encoding/binary"
 	"fmt"
 	"strings"
 
@@ -53,8 +53,10 @@ type GroupPreRegistration struct {
 
 	EmailApprovalGivenAt time.Time `json:"emailApprovalGivenAt,omit"`
 
-	EmailConfirmationLastSent     time.Time `json:"-"`
-	EmailConfirmationSendAttempts int       `json:"-"`
+	EmailConfirmationLastSendRequest time.Time `json:"-"`
+	EmailConfirmationSent            bool      `json:"-"`
+	EmailConfirmationSendErrors      int       `json:"-"`
+	EmailConfirmationSendAttempts    int       `json:"-"`
 
 	EstimatedYouth   int `json:"estimatedYouth"`
 	EstimatedLeaders int `json:"estimatedLeaders"`
@@ -100,6 +102,8 @@ func (gpr *GroupPreRegistration) PrepareForInsert() error {
 type PreRegDb interface {
 	CreateRecord(rec *GroupPreRegistration) error
 	GetRecord(securityKey string) (rec *GroupPreRegistration, err error)
+
+	NoteConfirmationEmailSent(rec *GroupPreRegistration) error
 }
 
 var (
@@ -129,6 +133,25 @@ func NewPreRegBoltDb(db *bolt.DB) (PreRegDb, error) {
 	return prdb, nil
 }
 
+func insertUpdate(tx *bolt.Tx, update GroupPreRegistration, bucket *bolt.Bucket) error {
+	data := &bytes.Buffer{}
+	encoder := gob.NewEncoder(data)
+	if err := encoder.Encode(update); err != nil {
+		return err
+	}
+	if nextInt, err := bucket.NextSequence(); err != nil {
+		return err
+	} else {
+		buf := new(bytes.Buffer)
+		if err = binary.Write(buf, binary.BigEndian, nextInt); err != nil {
+			return err
+		} else if err = bucket.Put(buf.Bytes(), data.Bytes()); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (d *preRegDbBolt) CreateRecord(in *GroupPreRegistration) error {
 	if err := in.PrepareForInsert(); err != nil {
 		return err
@@ -145,24 +168,11 @@ func (d *preRegDbBolt) CreateRecord(in *GroupPreRegistration) error {
 		} else if gemb.Get([]byte(in.ContactLeaderEmail)) != nil {
 			return GroupAlreadyCreated.New("Group with contact email %v already exists", in.ContactLeaderEmail)
 		} else {
-			data := &bytes.Buffer{}
-			encoder := gob.NewEncoder(data)
-			if err := encoder.Encode(in); err != nil {
-				return err
-			}
 			if bucket, err := gb.CreateBucketIfNotExists(in.Key()); err != nil {
 				return err
-			} else if nextInt, err := bucket.NextSequence(); err != nil {
+			} else if err := insertUpdate(tx, *in, bucket); err != nil {
 				return err
-			} else {
-				buf := new(bytes.Buffer)
-				if err = binary.Write(buf, binary.BigEndian, nextInt); err != nil {
-					return err
-				} else if err = bucket.Put(buf.Bytes(), data.Bytes()); err != nil {
-					return err
-				}
 			}
-
 
 			if err := gnmb.Put([]byte(in.OrganicKey()), in.Key()); err != nil {
 				return err
@@ -175,30 +185,51 @@ func (d *preRegDbBolt) CreateRecord(in *GroupPreRegistration) error {
 	})
 }
 
+func fetchRecord(tx *bolt.Tx, securityKey string) (rec *GroupPreRegistration, bucket *bolt.Bucket, err error) {
+	gb := tx.Bucket(BOLT_GROUPBUCKET)
+	key, err := base64.URLEncoding.DecodeString(securityKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	bucket = gb.Bucket(key)
+	if bucket == nil {
+		return nil, nil, RecordDoesNotExist.New("Record for key %s does not exist", securityKey)
+	}
+	_, data := bucket.Cursor().Last()
+	if data == nil {
+		return nil, nil, RecordDoesNotExist.New("Record for key %s does not exist", securityKey)
+	}
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	var res GroupPreRegistration
+	if err = decoder.Decode(&res); err != nil {
+		return nil, nil, err
+	} else {
+		return &res, bucket, err
+	}
+}
+
 func (d *preRegDbBolt) GetRecord(securityKey string) (rec *GroupPreRegistration, err error) {
 	return rec, d.db.View(func(tx *bolt.Tx) error {
-		gb := tx.Bucket(BOLT_GROUPBUCKET)
-		key, err := base64.URLEncoding.DecodeString(securityKey)
+		res, _, err := fetchRecord(tx, securityKey)
+		rec = res
+		return err
+	})
+}
+
+func (d *preRegDbBolt) NoteConfirmationEmailSent(gpr *GroupPreRegistration) error {
+	err := d.db.Update(func(tx *bolt.Tx) error {
+		rec, bucket, err := fetchRecord(tx, gpr.SecurityKey)
 		if err != nil {
 			return err
 		}
-		bucket := gb.Bucket(key)
-		if bucket == nil {
-			return RecordDoesNotExist.New("Record for key %s does not exist", securityKey)
-		}
-		_, data := bucket.Cursor().Last()
-		if data == nil {
-			return RecordDoesNotExist.New("Record for key %s does not exist", securityKey)
-		}
-		decoder := gob.NewDecoder(bytes.NewReader(data))
-		var res GroupPreRegistration
-		if err = decoder.Decode(&res); err != nil {
-			return err
-		} else {
-			rec = &res
-			return nil
-		}
+
+		rec.EmailConfirmationSent = true
+		insertUpdate(tx, *rec, bucket)
+
+		return nil
 	})
+	gpr.EmailConfirmationSent = true
+	return err
 }
 
 func (d *preRegDbBolt) init() error {
@@ -217,8 +248,9 @@ func (d *preRegDbBolt) init() error {
 }
 
 type PreRegHandler struct {
-	db         PreRegDb
-	getHandler *mux.Route
+	db                       PreRegDb
+	confirmationEmailService *ConfirmationEmailService
+	getHandler               *mux.Route
 }
 
 func (h *PreRegHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -248,6 +280,10 @@ func (h *PreRegHandler) Create(w http.ResponseWriter, r *http.Request) {
 		w.Header()["Location"] = []string{url.Path}
 		w.WriteHeader(http.StatusCreated)
 		io.Copy(w, buf)
+		// Finally, request an email confirmation.  Don't fail the create request if this fails.
+		if err := h.confirmationEmailService.RequestEmailConfirmation(&input); err != nil {
+			log.Printf("Failed to send initial email confirmation for key %s!", input.SecurityKey)
+		}
 	}
 }
 
@@ -272,9 +308,10 @@ func (h *PreRegHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func NewGroupPreRegistrationHandler(r *mux.Router, prdb PreRegDb) *PreRegHandler {
+func NewGroupPreRegistrationHandler(r *mux.Router, prdb PreRegDb, confirmationEmailService *ConfirmationEmailService) *PreRegHandler {
 	preRegHandler := &PreRegHandler{
 		db: prdb,
+		confirmationEmailService: confirmationEmailService,
 	}
 
 	r.HandleFunc("/preregistration", preRegHandler.Create).Methods("POST")
