@@ -5,12 +5,16 @@ angular.module('ccj16reg.view.registration', ['ngRoute', 'ngMaterial', 'ccj16reg
 .config(['$routeProvider', function($routeProvider) {
 	$routeProvider.when('/registration/:securityKey', {
 		templateUrl: 'views/registration/registration.html',
-		controller: 'RegistrationCtrl'
+		controller: 'RegistrationCtrl',
+		resolve: {
+			'registrationData': function($route, $location, registration) {
+				return registration.get({securityKey: $route.current.params.securityKey});
+			},
+		},
 	});
 }])
 
-.controller('RegistrationCtrl', function($scope, $routeParams, registration) {
-	$scope.registration = registration.get({securityKey: $routeParams.securityKey}, function(registration) {
-		$scope.$emit('CurrentGroupInformationChanged', registration);
-	});
+.controller('RegistrationCtrl', function($scope, $routeParams, registrationData) {
+	$scope.registration = registrationData;
+	$scope.$emit('CurrentGroupInformationChanged', registrationData);
 });
