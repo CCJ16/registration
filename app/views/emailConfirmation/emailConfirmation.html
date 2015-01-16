@@ -1,0 +1,26 @@
+<div layout="row" layout-align="center">
+	<md-card flex="20">
+		<md-card-content>
+			<md-toolbar>
+				<h2 class="md-toolbar-tools" ng-switch="verifying">
+						<span ng-switch-when="true">Verifying email...</span>
+						<span ng-switch-when="false">Email Verified</span>
+				</h2>
+			</md-toolbar>
+			<div layout="row" layout-align="center" ng-switch="verifying">
+				<div ng-switch-when="true" layout="column">
+					<p>Attempting to confirm {{email}}.</p>
+					<div flex layout="row" layout-align="center">
+						<md-progress-circular md-mode="indeterminate"></md-progress-circular>
+					</div>
+				</div>
+				<div ng-switch-when="false">
+					<div ng-switch="error">
+						<p ng-switch-when="false">{{email}} successfully verified!  Please close this window.</p>
+						<p ng-switch-default>Failed to verify {{email}}!  (Received error: {{error}})</p>
+					</div>
+				</div>
+			</div>
+		</md-card-content>
+	</md-card>
+</div>
