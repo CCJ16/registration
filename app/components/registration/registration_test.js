@@ -103,6 +103,39 @@ describe('ccj16reg.registration module', function() {
 			});
 			$httpBackend.flush()
 		});
+
+		describe('will have an interface for confirming emails', function() {
+			it('that succeeds with valid information', function() {
+				var good;
+
+				$httpBackend.expectPUT('/api/confirmpreregistration?email=test@example.com', 'validToken').respond(204, '');
+
+				registration.confirmEmail('test@example.com', 'validToken').then(function() {
+					good = true;
+				}, function() {
+					good = false;
+				})
+
+				$httpBackend.flush();
+
+				expect(good).toBe(true);
+			});
+			it('that fails with bad information', function() {
+				var good;
+
+				$httpBackend.expectPUT('/api/confirmpreregistration?email=test@example.com', 'badToken').respond(400, '');
+
+				registration.confirmEmail('test@example.com', 'badToken').then(function() {
+					good = true;
+				}, function() {
+					good = false;
+				})
+
+				$httpBackend.flush();
+
+				expect(good).toBe(false);
+			});
+		});
 	});
 
 	describe('currentDateFetch service', function() {

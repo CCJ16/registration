@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('ccj16reg.registration', ['ngResource'])
-.factory('registration', function($resource, currentDateFetch) {
+.factory('registration', function($resource, $http, currentDateFetch) {
 	var res = $resource('/api/preregistration/:securityKey');
 	res.prototype.agreedToEmailTerms = function(checked) {
 		if (angular.isDefined(checked)) {
@@ -14,6 +14,9 @@ angular.module('ccj16reg.registration', ['ngResource'])
 			}
 		}
 		return angular.isDefined(this.emailApprovalGivenAt);
+	}
+	res.confirmEmail = function(email, token) {
+		return $http.put('/api/confirmpreregistration?email=' + email, token);
 	}
 	return res;
 })
