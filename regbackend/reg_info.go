@@ -282,7 +282,7 @@ func (h *PreRegHandler) Create(w http.ResponseWriter, r *http.Request) {
 		io.Copy(w, buf)
 		// Finally, request an email confirmation.  Don't fail the create request if this fails.
 		if err := h.confirmationEmailService.RequestEmailConfirmation(&input); err != nil {
-			log.Printf("Failed to send initial email confirmation for key %s!", input.SecurityKey)
+			log.Printf("Failed to send initial email confirmation for key %s, error %s!", input.SecurityKey, err)
 		}
 	}
 }
