@@ -293,6 +293,27 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 					Convey("And not update other fields", func() {
 						So(record.ContactLeaderFirstName, ShouldNotEqual, rec.ContactLeaderFirstName)
 					})
+					Convey("And a retry of the operation is silently ignored", func() {
+						rec.EmailConfirmationSent = false
+						err := prdb.NoteConfirmationEmailSent(&rec)
+						Convey("Thus no error", func() {
+							So(err, ShouldBeNil)
+						})
+						Convey("And there should only be the two records", func() {
+							size := 0
+							So(db.View(func(tx *bolt.Tx) error {
+								bucket := tx.Bucket(BOLT_GROUPBUCKET).Bucket(rec.Key())
+								So(bucket, ShouldNotBeNil)
+								So(bucket.ForEach(func(k, v []byte) error {
+									size++
+									So(v, ShouldNotBeNil)
+									return nil
+								}), ShouldBeNil)
+								return nil
+							}), ShouldBeNil)
+							So(size, ShouldEqual, 2)
+						})
+					})
 				})
 			})
 		})

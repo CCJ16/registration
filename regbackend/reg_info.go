@@ -223,6 +223,10 @@ func (d *preRegDbBolt) NoteConfirmationEmailSent(gpr *GroupPreRegistration) erro
 			return err
 		}
 
+		if rec.EmailConfirmationSent {
+			return nil // Early return, avoid creating extra records.
+		}
+
 		rec.EmailConfirmationSent = true
 		insertUpdate(tx, *rec, bucket)
 
