@@ -77,7 +77,7 @@ If you are unable to click the link, please copy and paste it into your web brow
 
 If you wish to review your preregistration, please visit the following page:
 
-https://examplesite.com/registration?id=%[1]s
+https://examplesite.com/registration/%[1]s
 
 
 Thanks again,

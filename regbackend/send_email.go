@@ -111,7 +111,7 @@ If you are unable to click the link, please copy and paste it into your web brow
 
 If you wish to review your preregistration, please visit the following page:
 
-https://{{.Domain}}/registration?id={{.SecurityKey}}
+https://{{.Domain}}/registration/{{.SecurityKey}}
 
 
 Thanks again,
