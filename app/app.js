@@ -7,9 +7,10 @@ angular.module('ccj16reg', [
 	'ccj16reg.registration',
 	'ccj16reg.view.register',
 	'ccj16reg.view.registration',
-]).
-config(['$routeProvider', function($routeProvider) {
+])
+.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider) {
 	$routeProvider.otherwise({redirectTo: '/register'});
+	$locationProvider.html5Mode(true).hashPrefix("!");
 }])
 .config(function($mdThemingProvider) {
 	$mdThemingProvider.theme('default')

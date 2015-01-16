@@ -27,6 +27,14 @@ func main() {
 	NewGroupPreRegistrationHandler(apiR, gprdb, ces)
 
 	http.Handle("/api/", r)
-	http.Handle("/", http.FileServer(http.Dir("../app")))
+	otherFiles := http.FileServer(http.Dir("../app"))
+	http.Handle("/app.css", otherFiles)
+	http.Handle("/app.js", otherFiles)
+	http.Handle("/components/", otherFiles)
+	http.Handle("/views/", otherFiles)
+	http.Handle("/bower_components/", otherFiles)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "../app/index.html")
+	})
 	panic(http.ListenAndServe(":8080", nil))
 }
