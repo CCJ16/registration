@@ -20,8 +20,37 @@ func NewLocalMailder(serverAddr string) EmailSender {
 	}
 }
 
+// Shamelessly copied from net/smtp's SendMail function, to avoid the TLS connection.
 func (l localMailer) Send(from string, to []string, msg []byte) error {
-	return smtp.SendMail(l.serverAddr, nil, from, to, msg)
+	c, err := smtp.Dial(l.serverAddr)
+	if err != nil {
+		return err
+	}
+	defer c.Close()
+	if err = c.Hello("registration.cubjamboree.ca"); err != nil {
+		return err
+	}
+	if err = c.Mail(from); err != nil {
+		return err
+	}
+	for _, addr := range to {
+		if err = c.Rcpt(addr); err != nil {
+			return err
+		}
+	}
+	w, err := c.Data()
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(msg)
+	if err != nil {
+		return err
+	}
+	err = w.Close()
+	if err != nil {
+		return err
+	}
+	return c.Quit()
 }
 
 type ConfirmationEmailService struct {
