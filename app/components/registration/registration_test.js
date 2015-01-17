@@ -5,7 +5,7 @@ describe('ccj16reg.registration module', function() {
 	beforeEach(module('ccj16reg.registration'));
 
 	describe('registration service', function() {
-		var $httpBackend, registration, curDate = new Date();
+		var $httpBackend, registration, curDate = new Date().toISOString();
 
 		beforeEach(function() {
 			module(function($provide) {
@@ -43,9 +43,15 @@ describe('ccj16reg.registration module', function() {
 				expect(newReg.agreedToEmailTerms()).toBe(false);
 			});
 
+			it('should return false for a zero date from Go', function() {
+				var newReg = new registration();
+				newReg.emailApprovalGivenAt = "0001-01-01T00:00:00Z";
+				expect(newReg.agreedToEmailTerms()).toBe(false);
+			});
+
 			it('should return true when set', function() {
 				var newReg = new registration();
-				newReg.emailApprovalGivenAt = new Date();
+				newReg.emailApprovalGivenAt = new Date().toISOString();
 				expect(newReg.agreedToEmailTerms()).toBe(true);
 			});
 
@@ -61,7 +67,7 @@ describe('ccj16reg.registration module', function() {
 				expect(newReg.emailApprovalGivenAt).toBe(curDate);
 
 				var oldDate = curDate;
-				curDate = new Date();
+				curDate = new Date().toISOString();
 				expect(newReg.agreedToEmailTerms(true)).toBe(true);
 				expect(newReg.emailApprovalGivenAt).toBe(oldDate);
 			});
@@ -72,7 +78,7 @@ describe('ccj16reg.registration module', function() {
 				expect(newReg.emailApprovalGivenAt).toBe(curDate);
 
 				var oldDate = curDate;
-				curDate = new Date();
+				curDate = new Date().toISOString();
 
 				expect(newReg.agreedToEmailTerms(false)).toBe(false);
 				expect(newReg.agreedToEmailTerms(true)).toBe(true);
@@ -122,9 +128,15 @@ describe('ccj16reg.registration module', function() {
 				expect(newReg.validatedEmail()).toBe(false);
 			});
 
+			it('should return false for a zero date from Go', function() {
+				var newReg = new registration();
+				newReg.validatedOn = "0001-01-01T00:00:00Z";
+				expect(newReg.validatedEmail()).toBe(false);
+			});
+
 			it('should return true when set', function() {
 				var newReg = new registration();
-				newReg.validatedOn = new Date();
+				newReg.validatedOn = new Date().toISOString();
 				expect(newReg.validatedEmail()).toBe(true);
 			});
 		});
@@ -183,7 +195,7 @@ describe('ccj16reg.registration module', function() {
 		}))
 
 		it('should return the current date', function() {
-			expect(currentDateFetch()).toBe(curDate);
+			expect(currentDateFetch()).toBe(curDate.toISOString());
 		});
 	});
 });

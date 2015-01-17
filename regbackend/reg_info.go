@@ -49,10 +49,10 @@ type GroupPreRegistration struct {
 	ContactLeaderAddress     Address     `json:"contactLeaderAddress"`
 
 	ContactLeaderEmail string    `json:"contactLeaderEmail"`
-	ValidatedOn        time.Time `json:"validatedOn,omit"`
+	ValidatedOn        time.Time `json:"validatedOn"`
 	ValidationToken    string    `json:"-"`
 
-	EmailApprovalGivenAt time.Time `json:"emailApprovalGivenAt,omit"`
+	EmailApprovalGivenAt time.Time `json:"emailApprovalGivenAt"`
 
 	EmailConfirmationLastSendRequest time.Time `json:"-"`
 	EmailConfirmationSent            bool      `json:"-"`

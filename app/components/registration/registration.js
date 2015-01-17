@@ -13,10 +13,10 @@ angular.module('ccj16reg.registration', ['ngResource'])
 				this.emailApprovalGivenAt = undefined;
 			}
 		}
-		return angular.isDefined(this.emailApprovalGivenAt);
+		return angular.isDefined(this.emailApprovalGivenAt) && this.emailApprovalGivenAt !== "0001-01-01T00:00:00Z";
 	}
 	res.prototype.validatedEmail = function() {
-		return angular.isDefined(this.validatedOn);
+		return angular.isDefined(this.validatedOn) && this.validatedOn !== "0001-01-01T00:00:00Z";
 	}
 	res.confirmEmail = function(email, token) {
 		return $http.put('/api/confirmpreregistration?email=' + email, token);
@@ -24,5 +24,5 @@ angular.module('ccj16reg.registration', ['ngResource'])
 	return res;
 })
 .value('currentDateFetch', function() {
-	return new Date();
+	return new Date().toISOString();
 });
