@@ -3,10 +3,36 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/mux"
 )
+
+type requestLogger struct {
+	H http.Handler
+}
+
+type wWrapper struct {
+	code int
+	http.ResponseWriter
+}
+
+func (w *wWrapper) WriteHeader(code int) {
+	w.code = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (h *requestLogger) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	wrappedW := &wWrapper{
+		ResponseWriter: w,
+		code: http.StatusOK, // Default code
+	}
+	h.H.ServeHTTP(wrappedW, r)
+	duration := time.Now().Sub(start)
+	log.Printf("Handled request for url %s, code %v, took %s seconds", r.URL, wrappedW.code, duration)
+}
 
 func main() {
 	r := mux.NewRouter()
@@ -36,5 +62,5 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "../app/index.html")
 	})
-	panic(http.ListenAndServe(":8080", nil))
+	panic(http.ListenAndServe(":8080", &requestLogger{http.DefaultServeMux}))
 }
