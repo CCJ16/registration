@@ -28,7 +28,7 @@ func (h *requestLogger) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	wrappedW := &wWrapper{
 		ResponseWriter: w,
-		code: http.StatusOK, // Default code
+		code:           http.StatusOK, // Default code
 	}
 	h.H.ServeHTTP(wrappedW, r)
 	duration := time.Now().Sub(start)
