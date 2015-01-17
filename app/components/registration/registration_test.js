@@ -43,6 +43,12 @@ describe('ccj16reg.registration module', function() {
 				expect(newReg.agreedToEmailTerms()).toBe(false);
 			});
 
+			it('should return true when set', function() {
+				var newReg = new registration();
+				newReg.emailApprovalGivenAt = new Date();
+				expect(newReg.agreedToEmailTerms()).toBe(true);
+			});
+
 			it('should set the current (injected) date when set to true.', function() {
 				var newReg = new registration();
 				expect(newReg.agreedToEmailTerms(true)).toBe(true);
@@ -102,6 +108,25 @@ describe('ccj16reg.registration module', function() {
 				expect(false).toBe(true);
 			});
 			$httpBackend.flush()
+		});
+
+		describe('should have a working validatedEmail', function() {
+
+			it('should exist as a function', function() {
+				var newReg = new registration();
+				expect(newReg.validatedEmail).toBeDefined();
+			});
+
+			it('should return false for an empty object', function() {
+				var newReg = new registration();
+				expect(newReg.validatedEmail()).toBe(false);
+			});
+
+			it('should return true when set', function() {
+				var newReg = new registration();
+				newReg.validatedOn = new Date();
+				expect(newReg.validatedEmail()).toBe(true);
+			});
 		});
 
 		describe('will have an interface for confirming emails', function() {

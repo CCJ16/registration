@@ -15,6 +15,9 @@ angular.module('ccj16reg.registration', ['ngResource'])
 		}
 		return angular.isDefined(this.emailApprovalGivenAt);
 	}
+	res.prototype.validatedEmail = function() {
+		return angular.isDefined(this.validatedOn);
+	}
 	res.confirmEmail = function(email, token) {
 		return $http.put('/api/confirmpreregistration?email=' + email, token);
 	}

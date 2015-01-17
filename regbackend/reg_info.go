@@ -49,7 +49,7 @@ type GroupPreRegistration struct {
 	ContactLeaderAddress     Address     `json:"contactLeaderAddress"`
 
 	ContactLeaderEmail string    `json:"contactLeaderEmail"`
-	ValidatedOn        time.Time `json:"-"`
+	ValidatedOn        time.Time `json:"validatedOn,omit"`
 	ValidationToken    string    `json:"-"`
 
 	EmailApprovalGivenAt time.Time `json:"emailApprovalGivenAt,omit"`
@@ -81,6 +81,9 @@ func (gpr GroupPreRegistration) OrganicKey() string {
 func (gpr *GroupPreRegistration) PrepareForInsert() error {
 	if len(gpr.SecurityKey) != 0 {
 		return RecordAlreadyPrepared.New("Security key has already been created, bailing out")
+	}
+	if !gpr.ValidatedOn.Equal(time.Time{}) {
+		return RecordAlreadyPrepared.New("Email validation already given")
 	}
 	{
 		var random [keyLength]byte

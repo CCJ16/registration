@@ -143,6 +143,8 @@ func TestPreRegCreateRequest(t *testing.T) {
 				goodRecord.SecurityKey = newRec.SecurityKey
 				So(newRec.EmailApprovalGivenAt, ShouldHappenWithin, time.Second, goodRecord.EmailApprovalGivenAt)
 				newRec.EmailApprovalGivenAt = goodRecord.EmailApprovalGivenAt
+				So(newRec.ValidatedOn, ShouldHappenWithin, time.Second, goodRecord.ValidatedOn)
+				newRec.ValidatedOn = goodRecord.ValidatedOn
 				So(newRec, ShouldResemble, goodRecord)
 				Convey("With a matching security key to the database", func() {
 					So(prdb.entries[0][0].SecurityKey, ShouldEqual, newRec.SecurityKey)
@@ -165,6 +167,8 @@ func TestPreRegCreateRequest(t *testing.T) {
 					goodRecord.ValidationToken = prdb.entries[0][0].ValidationToken
 					So(prdb.entries[0][0].EmailApprovalGivenAt, ShouldHappenWithin, time.Second, goodRecord.EmailApprovalGivenAt)
 					prdb.entries[0][0].EmailApprovalGivenAt = goodRecord.EmailApprovalGivenAt
+					So(prdb.entries[0][0].ValidatedOn, ShouldHappenWithin, time.Second, goodRecord.ValidatedOn)
+					prdb.entries[0][0].ValidatedOn = goodRecord.ValidatedOn
 					So(prdb.entries[0][0], ShouldResemble, goodRecord)
 				})
 			})
