@@ -9,6 +9,7 @@ import (
 
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -104,6 +105,7 @@ type PreRegDb interface {
 	GetRecord(securityKey string) (rec *GroupPreRegistration, err error)
 
 	NoteConfirmationEmailSent(rec *GroupPreRegistration) error
+	VerifyEmail(email, token string) error
 }
 
 var (
@@ -111,6 +113,7 @@ var (
 	RecordAlreadyPrepared = DBError.NewClass("Group preregistration is already prepared")
 	RecordDoesNotExist    = DBError.NewClass("Record does not exist")
 	GroupAlreadyCreated   = DBError.NewClass("Group already exists")
+	BadVerificationToken  = DBError.NewClass("Bad email verification token")
 )
 
 var (
@@ -185,19 +188,15 @@ func (d *preRegDbBolt) CreateRecord(in *GroupPreRegistration) error {
 	})
 }
 
-func fetchRecord(tx *bolt.Tx, securityKey string) (rec *GroupPreRegistration, bucket *bolt.Bucket, err error) {
+func fetchRecordWithNativeKey(tx *bolt.Tx, key []byte, origKey string) (rec *GroupPreRegistration, bucket *bolt.Bucket, err error) {
 	gb := tx.Bucket(BOLT_GROUPBUCKET)
-	key, err := base64.URLEncoding.DecodeString(securityKey)
-	if err != nil {
-		return nil, nil, err
-	}
 	bucket = gb.Bucket(key)
 	if bucket == nil {
-		return nil, nil, RecordDoesNotExist.New("Record for key %s does not exist", securityKey)
+		return nil, nil, RecordDoesNotExist.New("Record for key %s does not exist", origKey)
 	}
 	_, data := bucket.Cursor().Last()
 	if data == nil {
-		return nil, nil, RecordDoesNotExist.New("Record for key %s does not exist", securityKey)
+		return nil, nil, RecordDoesNotExist.New("Record for key %s does not exist", origKey)
 	}
 	decoder := gob.NewDecoder(bytes.NewReader(data))
 	var res GroupPreRegistration
@@ -208,9 +207,26 @@ func fetchRecord(tx *bolt.Tx, securityKey string) (rec *GroupPreRegistration, bu
 	}
 }
 
+func fetchRecordWithSecurityKey(tx *bolt.Tx, securityKey string) (rec *GroupPreRegistration, bucket *bolt.Bucket, err error) {
+	key, err := base64.URLEncoding.DecodeString(securityKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	return fetchRecordWithNativeKey(tx, key, securityKey)
+}
+
+func fetchRecordWithEmail(tx *bolt.Tx, email string) (rec *GroupPreRegistration, bucket *bolt.Bucket, err error) {
+	gemb := tx.Bucket(BOLT_GROUPEMAILMAPBUCKET)
+	key := gemb.Get([]byte(email))
+	if key == nil {
+		return nil, nil, RecordDoesNotExist.New("Record for key %s does not exist", email)
+	}
+	return fetchRecordWithNativeKey(tx, key, email)
+}
+
 func (d *preRegDbBolt) GetRecord(securityKey string) (rec *GroupPreRegistration, err error) {
 	return rec, d.db.View(func(tx *bolt.Tx) error {
-		res, _, err := fetchRecord(tx, securityKey)
+		res, _, err := fetchRecordWithSecurityKey(tx, securityKey)
 		rec = res
 		return err
 	})
@@ -218,7 +234,7 @@ func (d *preRegDbBolt) GetRecord(securityKey string) (rec *GroupPreRegistration,
 
 func (d *preRegDbBolt) NoteConfirmationEmailSent(gpr *GroupPreRegistration) error {
 	err := d.db.Update(func(tx *bolt.Tx) error {
-		rec, bucket, err := fetchRecord(tx, gpr.SecurityKey)
+		rec, bucket, err := fetchRecordWithSecurityKey(tx, gpr.SecurityKey)
 		if err != nil {
 			return err
 		}
@@ -234,6 +250,28 @@ func (d *preRegDbBolt) NoteConfirmationEmailSent(gpr *GroupPreRegistration) erro
 	})
 	gpr.EmailConfirmationSent = true
 	return err
+}
+
+func (d *preRegDbBolt) VerifyEmail(email, token string) error {
+	return d.db.Update(func(tx *bolt.Tx) error {
+		rec, bucket, err := fetchRecordWithEmail(tx, email)
+		if err != nil {
+			return BadVerificationToken.New("Failed to verify token")
+		}
+
+		if token != rec.ValidationToken {
+			return BadVerificationToken.New("Failed to verify token")
+		}
+
+		if !rec.ValidatedOn.Equal(time.Time{}) {
+			return nil // Early return, avoid creating extra records.
+		}
+
+		rec.ValidatedOn = time.Now()
+		insertUpdate(tx, *rec, bucket)
+
+		return nil
+	})
 }
 
 func (d *preRegDbBolt) init() error {
@@ -312,6 +350,24 @@ func (h *PreRegHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *PreRegHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	email, ok := vars["email"]
+	if !ok {
+		http.Error(w, "No email given", 404)
+		return
+	}
+	if tokenBytes, err := ioutil.ReadAll(r.Body); err != nil {
+		http.Error(w, "Failed to read token", http.StatusInternalServerError)
+	} else {
+		token := string(tokenBytes)
+		if err = h.db.VerifyEmail(email, token); err != nil {
+			http.Error(w, "Failed to verify token", http.StatusBadRequest)
+		}
+	}
+	_ = email
+}
+
 func NewGroupPreRegistrationHandler(r *mux.Router, prdb PreRegDb, confirmationEmailService *ConfirmationEmailService) *PreRegHandler {
 	preRegHandler := &PreRegHandler{
 		db: prdb,
@@ -319,6 +375,7 @@ func NewGroupPreRegistrationHandler(r *mux.Router, prdb PreRegDb, confirmationEm
 	}
 
 	r.HandleFunc("/preregistration", preRegHandler.Create).Methods("POST")
+	r.HandleFunc("/confirmpreregistration", preRegHandler.VerifyEmail).Queries("email", "{email:.*@.*}").Methods("PUT")
 	preRegHandler.getHandler = r.HandleFunc("/preregistration/{SecurityKey:[a-zA-Z0-9-_]+}", preRegHandler.Get).Methods("GET")
 
 	return preRegHandler

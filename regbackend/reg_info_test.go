@@ -39,6 +39,25 @@ func (d *testPreRegDb) GetRecord(securityKey string) (rec *GroupPreRegistration,
 	return nil, RecordDoesNotExist.New("Record with given key (%s) does not exist.", securityKey)
 }
 
+func (d *testPreRegDb) VerifyEmail(email, token string) error {
+	recLoc := -1
+	for i, rec := range d.entries {
+		if rec[len(rec)-1].ContactLeaderEmail == email {
+			recLoc = i
+		}
+	}
+	if recLoc == -1 {
+		return BadVerificationToken.New("Failed to verify key")
+	}
+	recArray := d.entries[recLoc]
+	rec := &recArray[len(recArray)-1]
+	if rec.ValidationToken == token {
+		rec.ValidatedOn = time.Now()
+		return nil
+	}
+	return BadVerificationToken.New("Failed to verify key")
+}
+
 func (d *testPreRegDb) NoteConfirmationEmailSent(gpr *GroupPreRegistration) error {
 	recLoc := -1
 	for i, rec := range d.entries {
@@ -62,6 +81,7 @@ func TestPreRegCreateRequest(t *testing.T) {
 			PackName:             "Pack A",
 			GroupName:            "Test Group",
 			Council:              "1st Testingway",
+			ContactLeaderEmail:   "testemail@example.test",
 			EmailApprovalGivenAt: time.Now(),
 		}
 		goodRecordBody := bytes.Buffer{}
@@ -146,6 +166,48 @@ func TestPreRegCreateRequest(t *testing.T) {
 					So(prdb.entries[0][0].EmailApprovalGivenAt, ShouldHappenWithin, time.Second, goodRecord.EmailApprovalGivenAt)
 					prdb.entries[0][0].EmailApprovalGivenAt = goodRecord.EmailApprovalGivenAt
 					So(prdb.entries[0][0], ShouldResemble, goodRecord)
+				})
+			})
+			Convey("And sending a request to confirm the correct email address with the correct code", func() {
+				buf := bytes.NewReader([]byte(prdb.entries[0][1].ValidationToken))
+				r, err := http.NewRequest("PUT", "http://localhost:8080/confirmpreregistration?email="+goodRecord.ContactLeaderEmail, buf)
+				So(err, ShouldBeNil)
+				w := httptest.NewRecorder()
+
+				router.ServeHTTP(w, r)
+				Convey("Should return a 200 status code", func() {
+					So(w.Code, ShouldEqual, 200)
+					Convey("And set the contact is validated.", func() {
+						So(prdb.entries[0][len(prdb.entries[0])-1].ValidatedOn, ShouldHappenWithin, 5*time.Second, time.Now())
+					})
+				})
+			})
+			Convey("And sending a request to confirm the correct email address with the wrong code", func() {
+				buf := bytes.NewReader([]byte("BadToken"))
+				r, err := http.NewRequest("PUT", "http://localhost:8080/confirmpreregistration?email="+goodRecord.ContactLeaderEmail, buf)
+				So(err, ShouldBeNil)
+				w := httptest.NewRecorder()
+
+				router.ServeHTTP(w, r)
+				Convey("Should return a 200 status code", func() {
+					So(w.Code, ShouldEqual, 400)
+					Convey("And set the contact is not validated.", func() {
+						So(prdb.entries[0][len(prdb.entries[0])-1].ValidatedOn, ShouldHappenWithin, time.Second*0, time.Time{})
+					})
+				})
+			})
+			Convey("And sending a request to confirm the wrong email address with a code", func() {
+				buf := bytes.NewReader([]byte("BadToken"))
+				r, err := http.NewRequest("PUT", "http://localhost:8080/confirmpreregistration?email=abademail@invalid", buf)
+				So(err, ShouldBeNil)
+				w := httptest.NewRecorder()
+
+				router.ServeHTTP(w, r)
+				Convey("Should return a 200 status code", func() {
+					So(w.Code, ShouldEqual, 400)
+					Convey("And set the contact is not validated.", func() {
+						So(prdb.entries[0][len(prdb.entries[0])-1].ValidatedOn, ShouldHappenWithin, time.Second*0, time.Time{})
+					})
 				})
 			})
 		})
@@ -290,6 +352,9 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 						decoder := gob.NewDecoder(bytes.NewReader(data))
 						return decoder.Decode(&record)
 					}), ShouldBeNil)
+					Convey("With the new value", func() {
+						So(record.EmailConfirmationSent, ShouldEqual, true)
+					})
 					Convey("And not update other fields", func() {
 						So(record.ContactLeaderFirstName, ShouldNotEqual, rec.ContactLeaderFirstName)
 					})
@@ -314,6 +379,70 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 							So(size, ShouldEqual, 2)
 						})
 					})
+				})
+			})
+
+			Convey("And verifying a valid token", func() {
+				err := prdb.VerifyEmail(rec.ContactLeaderEmail, rec.ValidationToken)
+				Convey("Should complete without error", func() {
+					So(err, ShouldBeNil)
+				})
+				Convey("And update the database", func() {
+					record := GroupPreRegistration{}
+					So(db.View(func(tx *bolt.Tx) error {
+						bucket := tx.Bucket(BOLT_GROUPBUCKET).Bucket(rec.Key())
+						So(bucket, ShouldNotBeNil)
+						size := 0
+						var data []byte
+						So(bucket.ForEach(func(k, v []byte) error {
+							size++
+							So(v, ShouldNotBeNil)
+							data = v
+							return nil
+						}), ShouldBeNil)
+						Convey("By adding a new version", func() {
+							So(size, ShouldEqual, 2)
+						})
+						decoder := gob.NewDecoder(bytes.NewReader(data))
+						return decoder.Decode(&record)
+					}), ShouldBeNil)
+					Convey("With the new value", func() {
+						So(record.ValidatedOn, ShouldHappenWithin, time.Second*5, time.Now())
+					})
+					Convey("And a retry of the operation is silently ignored", func() {
+						err := prdb.VerifyEmail(rec.ContactLeaderEmail, rec.ValidationToken)
+						Convey("Thus no error", func() {
+							So(err, ShouldBeNil)
+						})
+						Convey("And there should only be the two records", func() {
+							size := 0
+							So(db.View(func(tx *bolt.Tx) error {
+								bucket := tx.Bucket(BOLT_GROUPBUCKET).Bucket(rec.Key())
+								So(bucket, ShouldNotBeNil)
+								So(bucket.ForEach(func(k, v []byte) error {
+									size++
+									So(v, ShouldNotBeNil)
+									return nil
+								}), ShouldBeNil)
+								return nil
+							}), ShouldBeNil)
+							So(size, ShouldEqual, 2)
+						})
+					})
+				})
+			})
+
+			Convey("And verifying an invalid token", func() {
+				err := prdb.VerifyEmail(rec.ContactLeaderEmail, "BadToken")
+				Convey("Should complete with appropriate error", func() {
+					So(BadVerificationToken.Contains(err), ShouldEqual, true)
+				})
+			})
+
+			Convey("And verifying an email not in the database", func() {
+				err := prdb.VerifyEmail("test@invalid", rec.ValidationToken)
+				Convey("Should complete with appropriate error (not revealing email error)", func() {
+					So(BadVerificationToken.Contains(err), ShouldEqual, true)
 				})
 			})
 		})
