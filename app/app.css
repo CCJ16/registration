@@ -44,9 +44,8 @@ md-card.fab-card md-card-content button.md-fab {
 
 @media (max-width: 600px) {
 	.btn-agreement {
-		margin-top: -15px;
-		padding-top: 0px;
-		margin-bottom: 20px;
+		margin-top: -6px;
+		margin-bottom: 35px;
 	}
 }
 
