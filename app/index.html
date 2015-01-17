@@ -1,39 +1,41 @@
 <!DOCTYPE html>
 <html lang="en" ng-app="ccj16reg" class="no-js">
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>CCJ16 Registration System</title>
-  <meta name="description" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <base href="/">
-  <link rel="stylesheet" href="bower_components/html5-boilerplate/css/normalize.css">
-  <link rel="stylesheet" href="bower_components/html5-boilerplate/css/main.css">
-  <link rel="stylesheet" href="app.css">
-  <link rel="stylesheet" href="bower_components/angular-material/angular-material.css">
-  <script src="bower_components/html5-boilerplate/js/vendor/modernizr-2.6.2.min.js"></script>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>CCJ16 Registration System</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<base href="/">
+	<link rel="stylesheet" href="bower_components/html5-boilerplate/css/normalize.css">
+	<link rel="stylesheet" href="bower_components/html5-boilerplate/css/main.css">
+	<link rel="stylesheet" href="bower_components/angular-material/angular-material.css">
+	<link rel="stylesheet" href="app.css">
+	<script src="bower_components/html5-boilerplate/js/vendor/modernizr-2.6.2.min.js"></script>
 </head>
 <body layout="column">
-  <!--[if lt IE 9]>
-      <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
-  <![endif]-->
+	<!--[if lt IE 9]>
+		<p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+	<![endif]-->
 
-  <div flex layout="column" ng-controller="CtrlApp">
-    <md-toolbar><h1 class="md-toolbar-tools"><span>CCJ16 Preregistration{{packDisplayName}}</span></h1></md-toolbar>
-    <md-content ng-view layout="column" flex></md-content>
-  </div>
+	<div flex layout="column" ng-controller="CtrlApp">
+		<md-toolbar><h1 class="md-toolbar-tools"><span>CCJ16 Preregistration{{packDisplayName}}</span></h1></md-toolbar>
+		<div>
+			<md-content ng-view layout="column" flex></md-content>
+		</div>
+	</div>
 
-  <script src="bower_components/angular/angular.js"></script>
-  <script src="bower_components/angular-animate/angular-animate.js"></script>
-  <script src="bower_components/angular-aria/angular-aria.js"></script>
-  <script src="bower_components/angular-resource/angular-resource.js"></script>
-  <script src="bower_components/angular-route/angular-route.js"></script>
-  <script src="bower_components/hammerjs/hammer.js"></script>
-  <script src="bower_components/angular-material/angular-material.js"></script>
-  <script src="app.js"></script>
-  <script src="views/register/register.js"></script>
-  <script src="views/registration/registration.js"></script>
-  <script src="views/emailConfirmation/emailConfirmation.js"></script>
-  <script src="components/registration/registration.js"></script>
+	<script src="bower_components/angular/angular.js"></script>
+	<script src="bower_components/angular-animate/angular-animate.js"></script>
+	<script src="bower_components/angular-aria/angular-aria.js"></script>
+	<script src="bower_components/angular-resource/angular-resource.js"></script>
+	<script src="bower_components/angular-route/angular-route.js"></script>
+	<script src="bower_components/hammerjs/hammer.js"></script>
+	<script src="bower_components/angular-material/angular-material.js"></script>
+	<script src="app.js"></script>
+	<script src="views/register/register.js"></script>
+	<script src="views/registration/registration.js"></script>
+	<script src="views/emailConfirmation/emailConfirmation.js"></script>
+	<script src="components/registration/registration.js"></script>
 </body>
 </html>
