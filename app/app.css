@@ -27,6 +27,21 @@
 	margin: auto;
 }
 
+md-card.fab-card md-card-content {
+	position: relative;
+}
+
+md-card.fab-card md-card-content button.md-fab {
+	position: absolute;
+	right: 12px;
+	bottom: 12px;
+}
+
+.icon-24 {
+	width: 24px;
+	height: 24px;
+}
+
 @media (max-width: 600px) {
 	.btn-agreement {
 		margin-top: -15px;
@@ -56,5 +71,8 @@
 	}
 	md-card md-card-content {
 		padding-bottom: 0px;
+	}
+	.print-button {
+		display: none;
 	}
 }

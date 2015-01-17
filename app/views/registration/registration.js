@@ -14,7 +14,10 @@ angular.module('ccj16reg.view.registration', ['ngRoute', 'ngMaterial', 'ccj16reg
 	});
 }])
 
-.controller('RegistrationCtrl', function($scope, $routeParams, registrationData) {
+.controller('RegistrationCtrl', function($scope, $routeParams, $window, registrationData) {
 	$scope.registration = registrationData;
 	$scope.$emit('CurrentGroupInformationChanged', registrationData);
+	$scope.printPage = function() {
+		$window.print();
+	};
 });
