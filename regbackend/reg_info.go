@@ -323,6 +323,7 @@ func (h *PreRegHandler) Create(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.Header()["Location"] = []string{url.Path}
+		w.Header()["Content-Type"] = []string{"application/json"}
 		w.WriteHeader(http.StatusCreated)
 		io.Copy(w, buf)
 		// Finally, request an email confirmation.  Don't fail the create request if this fails.
@@ -348,6 +349,7 @@ func (h *PreRegHandler) Get(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to get record", 500)
 			return
 		}
+		w.Header()["Content-Type"] = []string{"application/json"}
 		w.WriteHeader(http.StatusOK)
 		io.Copy(w, buf)
 	}

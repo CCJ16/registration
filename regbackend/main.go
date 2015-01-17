@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -62,5 +63,5 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "../app/index.html")
 	})
-	panic(http.ListenAndServe(":8080", &requestLogger{http.DefaultServeMux}))
+	panic(http.ListenAndServe(":8080", handlers.CompressHandler(&requestLogger{http.DefaultServeMux})))
 }
