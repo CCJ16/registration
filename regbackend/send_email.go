@@ -57,14 +57,16 @@ type ConfirmationEmailService struct {
 	domain         string
 	emailSender    EmailSender
 	fromAddress    string
+	fromName       string
 	contactAddress string
 	preRegDb       PreRegDb
 }
 
-func NewConfirmationEmailService(domain, fromAddress, contactAddress string, emailSender EmailSender, preRegDb PreRegDb) *ConfirmationEmailService {
+func NewConfirmationEmailService(domain, fromAddress, fromName, contactAddress string, emailSender EmailSender, preRegDb PreRegDb) *ConfirmationEmailService {
 	ret := &ConfirmationEmailService{
 		domain:         domain,
 		fromAddress:    fromAddress,
+		fromName:       fromName,
 		emailSender:    emailSender,
 		contactAddress: contactAddress,
 		preRegDb:       preRegDb,
@@ -76,7 +78,7 @@ func NewConfirmationEmailService(domain, fromAddress, contactAddress string, ema
 func (c *ConfirmationEmailService) RequestEmailConfirmation(gpr *GroupPreRegistration) error {
 	buf := &bytes.Buffer{}
 	type confirmationData struct {
-		ToAddress, FirstName, LastName, SecurityKey, ValidationToken, Domain, FromAddress, ContactAddress string
+		ToAddress, FirstName, LastName, SecurityKey, ValidationToken, Domain, FromAddress, FromName, ContactAddress string
 	}
 	if err := emailTemplate.Execute(buf, confirmationData{
 		ToAddress:       gpr.ContactLeaderEmail,
@@ -86,6 +88,7 @@ func (c *ConfirmationEmailService) RequestEmailConfirmation(gpr *GroupPreRegistr
 		ValidationToken: gpr.ValidationToken,
 		Domain:          c.domain,
 		FromAddress:     c.fromAddress,
+		FromName:        c.fromName,
 		ContactAddress:  c.contactAddress,
 	}); err != nil {
 		return err
@@ -96,7 +99,7 @@ func (c *ConfirmationEmailService) RequestEmailConfirmation(gpr *GroupPreRegistr
 	return c.preRegDb.NoteConfirmationEmailSent(gpr)
 }
 
-const emailTemplateString = `From: {{.FromAddress}}
+const emailTemplateString = `From: {{.FromName}} <{{.FromAddress}}>
 To: {{.ToAddress}}
 Subject: Confirm CCJ16 Preregistration
 Content-Type: text/plain; charset=UTF-8
@@ -105,7 +108,7 @@ Hi Scouter {{.FirstName}} {{.LastName}},
 
 Thank you for preregistering for CCJ16!  We hope you are as excited about this amazing camp as we are.  In order to confirm your CCJ16 preregistration, we ask that you confirm your email address by visiting the following page:
 
-https://{{.Domain}}/confirmpreregistration?email={{.ToAddress}}&token={{.ValidationToken}}
+https://{{.Domain}}/confirmpreregistration?email={{.ToAddress|urlquery}}&token={{.ValidationToken|urlquery}}
 
 If you are unable to click the link, please copy and paste it into your web browser.
 

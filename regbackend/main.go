@@ -49,7 +49,7 @@ func main() {
 		log.Fatalf("Failed to get group preregistration database started, err %s", err)
 	}
 
-	ces := NewConfirmationEmailService("registration.cubjamboree.ca", "no-reply@cubjamboree.ca", "info@cubjamboree.ca", NewLocalMailder("localhost:25"), gprdb)
+	ces := NewConfirmationEmailService("registration.cubjamboree.ca", "no-reply@cubjamboree.ca", "CCJ16 Registration", "info@cubjamboree.ca", NewLocalMailder("localhost:25"), gprdb)
 
 	NewGroupPreRegistrationHandler(apiR, gprdb, ces)
 

@@ -94,7 +94,7 @@ func TestPreRegCreateRequest(t *testing.T) {
 		prdb := &testPreRegDb{}
 		router := mux.NewRouter()
 		testEmailSender := &testEmailSender{}
-		ces := NewConfirmationEmailService("examplesite.com", "no-reply@examplesender.com", "info@infoexample.com", testEmailSender, prdb)
+		ces := NewConfirmationEmailService("examplesite.com", "no-reply@examplesender.com", "no-reply", "info@infoexample.com", testEmailSender, prdb)
 		prh := NewGroupPreRegistrationHandler(router, prdb, ces)
 
 		Convey("When given a good record", func() {
