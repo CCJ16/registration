@@ -87,7 +87,7 @@
 						</div>
 					</div>
 					<div layout="row" layout-sm="column"><md-checkbox ng-model="registration.agreedToEmailTerms" ng-model-options="{getterSetter: true}">I agree to receive emails from the CCJ16 team about the Cub Jamboree. (Required)</md-checkbox><md-button type="button" class="btn-agreement md-accent" ng-click="showEmailTos($event)">Details</md-button></div>
-					<md-button type="submit" class="md-raised md-primary" ng-disabled="!registrationTosAccepted || !registrationForm.$valid">Submit registration</md-button>
+					<md-button type="submit" class="md-raised md-primary" ng-disabled="!registrationTosAccepted">Submit registration</md-button>
 				</form>
 			</div>
 		</md-card-content>

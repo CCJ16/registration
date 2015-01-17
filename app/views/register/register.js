@@ -44,8 +44,8 @@ angular.module('ccj16reg.view.register', ['ngRoute', 'ngMaterial', 'ccj16reg.reg
 				$mdDialog.hide();
 				$mdDialog.show(
 					$mdDialog.alert()
-						.title('Failed to insert record')
-						.content('Server message: ' + msg)
+						.title('Failed to create registration')
+						.content('Server message: ' + msg.data)
 						.ok('OK')
 				);
 			});
