@@ -370,7 +370,6 @@ func (h *PreRegHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to verify token", http.StatusBadRequest)
 		}
 	}
-	_ = email
 }
 
 func NewGroupPreRegistrationHandler(r *mux.Router, prdb PreRegDb, confirmationEmailService *ConfirmationEmailService) *PreRegHandler {
