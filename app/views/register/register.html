@@ -2,20 +2,20 @@
 	<md-card flex-gt-lg="66" flex="90">
 		<md-card-content>
 			<md-toolbar><h2 class="md-toolbar-tools"><span>Group preregistration</span></h2></md-toolbar>
-			<p>Complete all fields on your form to submit your Pack's registration for CCJ16.  You will receive an email requesting you to confirm your email address.  Once you confirm you email address, your preliminary application will be accepted.</p>
+			<p>Complete all fields on your form to submit your Pack's registration for CCJ16 (fields marked with a <span class="required-field-marker">*</span> are mandatory).  You will receive an email requesting you to confirm your email address.  Once you confirm you email address, your preliminary application will be accepted.</p>
 			<div layout="row" layout-align="center">
-				<form layout="column">
+				<form layout="column" name="registrationForm" ng-submit="submitRegistration();">
 					<div layout-gt-sm="row" layout="column" layout-align="center">
 						<div layout="column">
 							<h3>Group information</h3>
 							<div layout="row">
 								<md-input-container>
-									<label>Council</label>
-									<input type="text" ng-model="registration.council">
+									<label>Council<span class="required-field-marker">*</span></label>
+									<input type="text" ng-model="registration.council" required>
 								</md-input-container>
 								<md-input-container>
-									<label>Group Name</label>
-									<input type="text" ng-model="registration.groupName">
+									<label>Group Name<span class="required-field-marker">*</span></label>
+									<input type="text" ng-model="registration.groupName" required>
 								</md-input-container>
 							</div>
 							<div layout="row">
@@ -40,22 +40,22 @@
 							<h3>Contact Leader information</h3>
 							<div layout="row">
 								<md-input-container>
-									<label>First Name</label>
-									<input type="text" ng-model="registration.contactLeaderFirstName">
+									<label>First Name<span class="required-field-marker">*</span></label>
+									<input type="text" ng-model="registration.contactLeaderFirstName" required>
 								</md-input-container>
 								<md-input-container>
-									<label>Last Name</label>
-									<input type="text" ng-model="registration.contactLeaderLastName">
+									<label>Last Name<span class="required-field-marker">*</span></label>
+									<input type="text" ng-model="registration.contactLeaderLastName" required>
 								</md-input-container>
 							</div>
 							<div layout="row">
 								<md-input-container>
-									<label>Email</label>
-									<input type="email" ng-model="registration.contactLeaderEmail">
+									<label>Email<span class="required-field-marker">*</span></label>
+									<input type="email" ng-model="registration.contactLeaderEmail" required>
 								</md-input-container>
 								<md-input-container>
-									<label>Phone Number</label>
-									<input type="tel" ng-model="registration.contactLeaderPhoneNumber">
+									<label>Phone Number<span class="required-field-marker">*</span></label>
+									<input type="tel" ng-model="registration.contactLeaderPhoneNumber" required>
 								</md-input-container>
 							</div>
 							<div layout="row">
@@ -86,8 +86,8 @@
 							</div>
 						</div>
 					</div>
-					<div layout="row" layout-sm="column"><md-checkbox ng-model="registration.agreedToEmailTerms" ng-model-options="{getterSetter: true}">I agree to receive emails from the CCJ16 team about the Cub Jamboree. (Required) </md-checkbox><md-button class="btn-agreement md-accent" ng-click="showEmailTos($event)">Details</md-button></div>
-					<md-button class="md-raised md-primary" ng-click="submitRegistration();" ng-disabled="!registrationTosAccepted">Submit registration</md-button>
+					<div layout="row" layout-sm="column"><md-checkbox ng-model="registration.agreedToEmailTerms" ng-model-options="{getterSetter: true}">I agree to receive emails from the CCJ16 team about the Cub Jamboree. (Required)</md-checkbox><md-button type="button" class="btn-agreement md-accent" ng-click="showEmailTos($event)">Details</md-button></div>
+					<md-button type="submit" class="md-raised md-primary" ng-disabled="!registrationTosAccepted || !registrationForm.$valid">Submit registration</md-button>
 				</form>
 			</div>
 		</md-card-content>
