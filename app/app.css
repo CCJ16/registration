@@ -18,3 +18,11 @@
 	margin: 0px;
 	text-align: center;
 }
+
+@media (max-width: 600px) {
+	.btn-agreement {
+		margin-top: -15px;
+		padding-top: 0px;
+		margin-bottom: 20px;
+	}
+}

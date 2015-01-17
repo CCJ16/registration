@@ -1,11 +1,11 @@
 <div layout="row" layout-align="center">
-	<md-card flex="66">
+	<md-card flex-gt-lg="66" flex="90">
 		<md-card-content>
 			<md-toolbar><h2 class="md-toolbar-tools"><span>Group preregistration</span></h2></md-toolbar>
 			<p>Complete all fields on your form to submit your Pack's registration for CCJ16.  You will receive an email requesting you to confirm your email address.  Once you confirm you email address, your preliminary application will be accepted.</p>
 			<div layout="row" layout-align="center">
 				<form layout="column">
-					<div layout="row">
+					<div layout-gt-sm="row" layout="column" layout-align="center">
 						<div layout="column">
 							<h3>Group information</h3>
 							<div layout="row">
@@ -86,7 +86,7 @@
 							</div>
 						</div>
 					</div>
-					<div layout="row"><md-checkbox ng-model="registration.agreedToEmailTerms" ng-model-options="{getterSetter: true}">I agree to receive emails from the CCJ16 team about the Cub Jamboree. (Required) </md-checkbox><md-button class="md-accent" ng-click="showEmailTos($event)">Details</md-button></div>
+					<div layout="row" layout-sm="column"><md-checkbox ng-model="registration.agreedToEmailTerms" ng-model-options="{getterSetter: true}">I agree to receive emails from the CCJ16 team about the Cub Jamboree. (Required) </md-checkbox><md-button class="btn-agreement md-accent" ng-click="showEmailTos($event)">Details</md-button></div>
 					<md-button class="md-raised md-primary" ng-click="submitRegistration();" ng-disabled="!registrationTosAccepted">Submit registration</md-button>
 				</form>
 			</div>
