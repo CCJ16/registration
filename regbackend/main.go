@@ -1,6 +1,9 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -35,6 +38,20 @@ func (h *requestLogger) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Handled request for url %s, code %v, took %s seconds", r.URL, wrappedW.code, duration)
 }
 
+type grabDb struct {
+	db *bolt.DB
+}
+
+func (h *grabDb) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	err := h.db.View(func(tx *bolt.Tx) error {
+		w.Header()["Content-Length"] = []string{fmt.Sprint(tx.Size())}
+		return tx.Copy(w)
+	})
+	if err != nil {
+		log.Panicf("Got error copy database %s", err)
+	}
+}
+
 func main() {
 	r := mux.NewRouter()
 	apiR := r.PathPrefix("/api/").Subrouter()
@@ -52,6 +69,17 @@ func main() {
 	ces := NewConfirmationEmailService("registration.cubjamboree.ca", "no-reply@cubjamboree.ca", "CCJ16 Registration", "info@cubjamboree.ca", NewLocalMailder("localhost:25"), gprdb)
 
 	NewGroupPreRegistrationHandler(apiR, gprdb, ces)
+
+	var key string
+	{
+		var random [32]byte
+		if _, err := rand.Read(random[:]); err != nil {
+			log.Fatalf("During startup, failed to get entropy with error %s", err)
+		}
+		key = base64.URLEncoding.EncodeToString(random[:])
+	}
+	log.Print("DB Token: ", key)
+	apiR.Handle("/grabdb", &grabDb{db}).Headers("X-My-Auth-Token", key).Methods("GET").Queries("key", key)
 
 	http.Handle("/api/", r)
 	otherFiles := http.FileServer(http.Dir("../app"))
