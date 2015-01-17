@@ -5,13 +5,17 @@
 }
 
 .form-redisplay {
+	display: flex;
+	flex-direction: column;
 	padding: 16px;
+	flex: 1 0;
 }
 
 .form-redisplay h4 {
 	margin: 0px 0px 3px;
 	font-weight: 400;
 	font-size: 0.8em;
+	text-align: center;
 }
 
 .form-redisplay p {
@@ -19,10 +23,38 @@
 	text-align: center;
 }
 
+.form-redisplay md-checkbox {
+	margin: auto;
+}
+
 @media (max-width: 600px) {
 	.btn-agreement {
 		margin-top: -15px;
 		padding-top: 0px;
 		margin-bottom: 20px;
+	}
+}
+
+@media (max-width: 420px) {
+	[layout-vsm] {
+		box-sizing: border-box;
+		display: -webkit-flex;
+		display: -ms-flexbox;
+		display: flex;
+	}
+
+	[layout-vsm=column] {
+		-webkit-flex-direction: column;
+		    -ms-flex-direction: column;
+		        flex-direction: column;
+  }
+}
+
+@media print {
+	md-card{
+		margin: 0px;
+	}
+	md-card md-card-content {
+		padding-bottom: 0px;
 	}
 }

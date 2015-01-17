@@ -1,55 +1,63 @@
-<div layout="row" layout-align="center">
-	<md-card flex="20">
-		<md-card-content>
-			<md-toolbar><h2 class="md-toolbar-tools"><span>Estimated Participant counts</span></h2></md-toolbar>
-			<div layout="row" layout-align="center">
-				<div layout="column">
-					<div layout="row">
-						<div class="form-redisplay">
-							<h4>Estimated Youth</h4>
-							<p>{{registration.estimatedYouth}}</p>
+<div layout-gt-md="row" layout="column" layout-align-gt-md="center">
+	<div layout-md="row" layout-align-md="center" layout-sm="row" layout-align-sm="center" flex-gt-lg="45" flex-lg="60">
+		<md-card flex-md="90" flex-sm="90">
+			<md-card-content>
+				<md-toolbar><h2 class="md-toolbar-tools"><span>Contact Leader</span></h2></md-toolbar>
+				<div layout="row" layout-align="center">
+					<div layout="column">
+						<div layout="row" layout-sm="column">
+							<div layout="row" flex>
+								<div class="form-redisplay">
+									<h4>First Name</h4>
+									<p>{{registration.contactLeaderFirstName}}</p>
+								</div>
+								<div class="form-redisplay">
+									<h4>Last Name</h4>
+									<p>{{registration.contactLeaderLastName}}</p>
+								</div>
+							</div>
+							<div layout="row" layout-vsm="column">
+								<div class="form-redisplay">
+									<h4>Email</h4>
+									<p>{{registration.contactLeaderEmail}}</p>
+									<md-checkbox ng-model="registration.validatedEmail" ng-model-options="{getterSetter: true}" disabled>Verified</md-checkbox>
+								</div>
+								<div class="form-redisplay">
+									<h4>Phone Number</h4>
+									<p>{{registration.contactLeaderPhoneNumber}}</p>
+								</div>
+							</div>
 						</div>
-						<div class="form-redisplay">
-							<h4>Estimated Leaders</h4>
-							<p>{{registration.estimatedLeaders}}</p>
+						<md-checkbox ng-model="registration.agreedToEmailTerms" ng-model-options="{getterSetter: true}" disabled>I agree to receive emails from the CCJ16 team about the Cub Jamboree.</md-checkbox>
+					</div>
+				</div>
+			</md-card-content>
+		</md-card>
+	</div>
+	<div layout-md="row" layout-align-md="center" layout-sm="row" layout-align-sm="center" flex-gt-lg="25" flex-lg="30">
+		<md-card flex-md="90" flex-sm="90">
+			<md-card-content>
+				<md-toolbar><h2 class="md-toolbar-tools"><span>Estimated Participant counts</span></h2></md-toolbar>
+				<div layout="row" layout-align="center">
+					<div layout="column">
+						<div layout="row">
+							<div class="form-redisplay">
+								<h4>Estimated Youth</h4>
+								<p>{{registration.estimatedYouth}}</p>
+							</div>
+							<div class="form-redisplay">
+								<h4>Estimated Leaders</h4>
+								<p>{{registration.estimatedLeaders}}</p>
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
-		</md-card-content>
-	</md-card>
-	<md-card flex="40">
-		<md-card-content>
-			<md-toolbar><h2 class="md-toolbar-tools"><span>Contact Leader</span></h2></md-toolbar>
-			<div layout="row" layout-align="center">
-				<div layout="column">
-					<div layout="row">
-						<div class="form-redisplay">
-							<h4>First Name</h4>
-							<p>{{registration.contactLeaderFirstName}}</p>
-						</div>
-						<div class="form-redisplay">
-							<h4>Last Name</h4>
-							<p>{{registration.contactLeaderLastName}}</p>
-						</div>
-						<div class="form-redisplay">
-							<h4>Email</h4>
-							<p>{{registration.contactLeaderEmail}}</p>
-							<md-checkbox ng-model="registration.validatedEmail" ng-model-options="{getterSetter: true}" disabled>Verified</md-checkbox>
-						</div>
-						<div class="form-redisplay">
-							<h4>Phone Number</h4>
-							<p>{{registration.contactLeaderPhoneNumber}}</p>
-						</div>
-					</div>
-					<md-checkbox ng-model="registration.agreedToEmailTerms" ng-model-options="{getterSetter: true}" disabled>I agree to receive emails from the CCJ16 team about the Cub Jamboree.</md-checkbox>
-				</div>
-			</div>
-		</md-card-content>
-	</md-card>
+			</md-card-content>
+		</md-card>
+	</div>
 </div>
 <div layout="row" layout-align="center">
-	<md-card flex="60">
+	<md-card flex-gt-lg="70" flex="90">
 		<md-card-content>
 			<md-toolbar><h2 class="md-toolbar-tools"><span>Deposit</span></h2></md-toolbar>
 			<p>To complete your submission, please print this page and send it in with your deposit to the address below.  Your cheque in the amount of $250 should be made payable to Scouts Canada.</p>
