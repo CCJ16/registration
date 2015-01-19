@@ -11,6 +11,7 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/spacemonkeygo/errors/errhttp"
 )
 
 type requestLogger struct {
@@ -50,6 +51,10 @@ func (h *grabDb) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Panicf("Got error copy database %s", err)
 	}
+}
+
+func httpError(w http.ResponseWriter, err error) {
+	http.Error(w, errhttp.GetErrorBody(err), errhttp.GetStatusCode(err, 500))
 }
 
 func main() {

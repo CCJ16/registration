@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,6 +26,14 @@ type testPreRegDb struct {
 func (db *testPreRegDb) CreateRecord(in *GroupPreRegistration) error {
 	if err := in.PrepareForInsert(); err != nil {
 		return err
+	}
+	for _, rec := range db.entries {
+		if rec[len(rec)-1].OrganicKey() == in.OrganicKey() {
+			return GroupAlreadyCreated.New("Group %s of %s, with pack name %s already exists", in.GroupName, in.Council, in.PackName)
+		}
+		if rec[len(rec)-1].ContactLeaderEmail == in.ContactLeaderEmail {
+			return GroupAlreadyCreated.New("A previous group already registered with contact email address %s\n", in.ContactLeaderEmail)
+		}
 	}
 	db.entries = append(db.entries, []GroupPreRegistration{*in})
 	return nil
@@ -172,6 +181,57 @@ func TestPreRegCreateRequest(t *testing.T) {
 					So(prdb.entries[0][0], ShouldResemble, goodRecord)
 				})
 			})
+
+			Convey("And attempting to re create the same group", func() {
+				Convey("Should fail with an error if done again with the same group set", func() {
+					goodRecord.ContactLeaderEmail = "newemail@example.test"
+					goodRecordBody := bytes.Buffer{}
+					if bytes, err := json.Marshal(goodRecord); err != nil {
+						t.Fatal(err)
+					} else {
+						goodRecordBody.Write(bytes)
+					}
+					r, err := http.NewRequest("POST", "http://localhost:8080/preregistration", &goodRecordBody)
+					if err != nil {
+						t.Fatal(err)
+					}
+					w := httptest.NewRecorder()
+
+					router.ServeHTTP(w, r)
+
+					Convey("With a 400 status code", func() {
+						So(w.Code, ShouldEqual, 400)
+						Convey("And error message", func() {
+							So(string(w.Body.Bytes()), ShouldEqual, fmt.Sprintf("Group already registered: Group %s of %s, with pack name %s already exists\n", goodRecord.GroupName, goodRecord.Council, goodRecord.PackName))
+						})
+					})
+				})
+
+				Convey("Should fail with an error if done again with the same email set", func() {
+					goodRecord.Council = "Test Council 2"
+					goodRecordBody := bytes.Buffer{}
+					if bytes, err := json.Marshal(goodRecord); err != nil {
+						t.Fatal(err)
+					} else {
+						goodRecordBody.Write(bytes)
+					}
+					r, err := http.NewRequest("POST", "http://localhost:8080/preregistration", &goodRecordBody)
+					if err != nil {
+						t.Fatal(err)
+					}
+					w := httptest.NewRecorder()
+
+					router.ServeHTTP(w, r)
+
+					Convey("With a 400 status code", func() {
+						So(w.Code, ShouldEqual, 400)
+						Convey("And error message", func() {
+							So(string(w.Body.Bytes()), ShouldEqual, fmt.Sprintf("Group already registered: A previous group already registered with contact email address %s\n", goodRecord.ContactLeaderEmail))
+						})
+					})
+				})
+			})
+
 			Convey("And sending a request to confirm the correct email address with the correct code", func() {
 				buf := bytes.NewReader([]byte(prdb.entries[0][1].ValidationToken))
 				r, err := http.NewRequest("PUT", "http://localhost:8080/confirmpreregistration?email="+goodRecord.ContactLeaderEmail, buf)

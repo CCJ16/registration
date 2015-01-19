@@ -22,6 +22,7 @@ import (
 	"github.com/boltdb/bolt"
 
 	"github.com/spacemonkeygo/errors"
+	"github.com/spacemonkeygo/errors/errhttp"
 )
 
 const keyLength = 24
@@ -113,9 +114,10 @@ type PreRegDb interface {
 
 var (
 	DBError               = errors.NewClass("Database Error")
+	DBGenericError        = DBError.NewClass("Database Error", errhttp.OverrideErrorBody("Please retry or contact site administrator"))
 	RecordAlreadyPrepared = DBError.NewClass("Group preregistration is already prepared")
 	RecordDoesNotExist    = DBError.NewClass("Record does not exist")
-	GroupAlreadyCreated   = DBError.NewClass("Group already exists")
+	GroupAlreadyCreated   = DBError.NewClass("Group already registered", errhttp.SetStatusCode(400))
 	BadVerificationToken  = DBError.NewClass("Bad email verification token")
 )
 
@@ -168,11 +170,11 @@ func (d *preRegDbBolt) CreateRecord(in *GroupPreRegistration) error {
 		gemb := tx.Bucket(BOLT_GROUPEMAILMAPBUCKET)
 		if gb.Get(in.Key()) != nil {
 			log.Printf("Managed to get a duplicate security key somehow!")
-			return GroupAlreadyCreated.New("Group with security key %v already exists", in.Key())
+			return GroupAlreadyCreated.New(fmt.Sprintf("Group with security key %v already exists", in.Key()), errhttp.OverrideErrorBody("Temporary fatal error creating registration.  Please retry."))
 		} else if gnmb.Get([]byte(in.OrganicKey())) != nil {
-			return GroupAlreadyCreated.New("Group with organic key %v already exists", in.OrganicKey())
+			return GroupAlreadyCreated.New("%s of %s, with pack name %s", in.GroupName, in.Council, in.PackName)
 		} else if gemb.Get([]byte(in.ContactLeaderEmail)) != nil {
-			return GroupAlreadyCreated.New("Group with contact email %v already exists", in.ContactLeaderEmail)
+			return GroupAlreadyCreated.New("A previous group already registered with contact email address %s\n", in.ContactLeaderEmail)
 		} else {
 			if bucket, err := gb.CreateBucketIfNotExists(in.Key()); err != nil {
 				return err
@@ -309,7 +311,7 @@ func (h *PreRegHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.db.CreateRecord(&input); err != nil {
 		log.Printf("Failed to insert record!  Error: %s", err)
-		http.Error(w, "Failed to insert record", 500)
+		httpError(w, err)
 		return
 	} else {
 		buf := &bytes.Buffer{}
