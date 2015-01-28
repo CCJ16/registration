@@ -8,7 +8,7 @@ angular.module('ccj16reg.view.registration', ['ngRoute', 'ngMaterial', 'ccj16reg
 		controller: 'RegistrationCtrl',
 		resolve: {
 			'registrationData': function($route, $location, registration) {
-				return registration.get({securityKey: $route.current.params.securityKey});
+				return registration.get({securityKey: $route.current.params.securityKey}).$promise;
 			},
 		},
 	});
