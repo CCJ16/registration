@@ -9,10 +9,12 @@ exports.config = {
 	],
 
 	multiCapabilities: [
-		{'browserName': 'chrome'},
-		{'browserName': 'firefox', version: 34},
-		{'browserName': 'internet explorer'},
-		{'browserName': 'safari'},
+		addCommon({browserName: 'chrome', version: 39}),
+		addCommon({browserName: 'firefox', version: 34}),
+		addCommon({browserName: 'internet explorer', version: 11}),
+		addCommon({browserName: 'internet explorer', version: 10}),
+		addCommon({browserName: 'safari', version: '8', platform: 'OS X 10.10'}),
+		addCommon({browserName: 'iphone', version: '8.1', platform: 'OS X 10.10', 'device-orientation': 'portrait'}),
 	],
 
 	baseUrl: 'http://localhost:9090/',
@@ -23,3 +25,26 @@ exports.config = {
 		defaultTimeoutInterval: 30000
 	}
 };
+function addCommon(capabilities) {
+	var buildLabel = 'TRAVIS #' + process.env.TRAVIS_JOB_NUMBER + ' (' + process.env.TRAVIS_JOB_ID + ')';
+	if (process.env.TRAVIS) {
+		return {
+			'tunnel-identifier': process.env.TRAVIS_JOB_NUMBER,
+
+			'name': 'CCJ16 Registration (e2e)',
+			'build': buildLabel,
+
+			'browserName': capabilities.browserName,
+			'platform': capabilities.platform,
+			'version': capabilities.version,
+			'device-orientation': capabilities['device-orientation'],
+		};
+	} else {
+		return {
+			'browserName': capabilities.browserName,
+			'platform': capabilities.platform,
+			'version': capabilities.version,
+			'device-orientation': capabilities['device-orientation'],
+		};
+	}
+}

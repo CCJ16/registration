@@ -32,9 +32,15 @@ module.exports = function(config){
 			browserName: 'android',
 			version: '4.4',
 		},
-		'SL_IE': {
+		'SL_IE_10': {
 			base: 'SauceLabs',
 			browserName: 'internet explorer',
+			version: 10,
+		},
+		'SL_IE_11': {
+			base: 'SauceLabs',
+			browserName: 'internet explorer',
+			version: 11,
 		},
 	};
 
@@ -56,7 +62,7 @@ module.exports = function(config){
 		browsers: Object.keys(customLaunchers),
 		customLaunchers: customLaunchers,
 		sauceLabs: {
-			testName: 'CCJ16 Registration',
+			testName: 'CCJ16 Registration (unit)',
 			recordScreenshots: false,
 			connectOptions: {
 				port: 5757,
@@ -80,4 +86,15 @@ module.exports = function(config){
 			suite: 'unit'
 		}
 	});
+
+	if (process.env.TRAVIS) {
+		var buildLabel = 'TRAVIS #' + process.env.TRAVIS_JOB_NUMBER + ' (' + process.env.TRAVIS_JOB_ID + ')';
+
+		// Karma (with socket.io 1.x) buffers by 50 and 50 tests can take a long time on IEs;-)
+		config.browserNoActivityTimeout = 120000;
+
+		config.sauceLabs.build = buildLabel;
+		config.sauceLabs.startConnect = false;
+		config.sauceLabs.tunnelIdentifier = process.env.TRAVIS_JOB_NUMBER;
+	}
 };

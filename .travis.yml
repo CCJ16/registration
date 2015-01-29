@@ -6,6 +6,14 @@ go:
 node_js:
   - "0.10"
 
+env:
+  matrix:
+    - REMOTE=0
+    - secure: RgQaAlyUvBfM4SUi7dzQp+PVAFEVa9uTvSN5mrwtwYgcogrUk0enFg58PPYWAHIXaImL61fJrchvswESUMEOFS63yjj0ExPQVxMbVGrnHOZxpQyMIfhRlqrrDsh5ebWhsnia9nmovqX5d93o477DNgFrxhMSVZvPcOD5FxLOzZA=
+
+addons:
+  sauce_connect: true
+
 install:
   - go get -v -t ./...
   - pushd regbackend && go build -v && popd
@@ -13,13 +21,14 @@ install:
 
 before_script:
   - export DISPLAY=:99.0
-  - sh -e /etc/init.d/xvfb start
-  - npm start > /dev/null &
+  - if [[ $REMOTE == 0 ]]; then sh -e /etc/init.d/xvfb start; fi
   - cd regbackend && ./regbackend -http.listen=localhost:9090 >/dev/null &
   - npm run update-webdriver
   - sleep 1 # give server time to start
 
 script:
   - go test -v ./...
-  - node_modules/.bin/karma start karma.conf.js --no-auto-watch --single-run --reporters=dots --browsers=Firefox
-  - node_modules/.bin/protractor e2e-tests/protractor.conf.js --browser=firefox
+  - if [[ $REMOTE == 0 ]]; then node_modules/.bin/karma start karma.conf.js --no-auto-watch --single-run --reporters=dots --browsers=Firefox; fi
+  - if [[ $REMOTE == 0 ]]; then node_modules/.bin/protractor e2e-tests/protractor.conf.js --browser=firefox; fi
+  - if [[ $REMOTE == 1 ]]; then node_modules/.bin/karma start karma-remote.conf.js --no-auto-watch --single-run --reporters=dots,saucelabs; fi
+  - if [[ $REMOTE == 1 ]]; then node_modules/.bin/protractor e2e-tests/protractor-remote.conf.js; fi
