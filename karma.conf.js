@@ -1,33 +1,31 @@
 module.exports = function(config){
-  config.set({
+	config.set({
+		basePath : './',
 
-    basePath : './',
+		files : [
+			'app/bower_components/angular/angular.js',
+			'app/bower_components/hammerjs/hammer.js',
+			'app/bower_components/angular-*/angular-*.js',
+			'app/components/**/*.js',
+			'app/views/**/*.js'
+		],
 
-    files : [
-      'app/bower_components/angular/angular.js',
-      'app/bower_components/hammerjs/hammer.js',
-      'app/bower_components/angular-*/angular-*.js',
-      'app/components/**/*.js',
-      'app/views/**/*.js'
-    ],
+		autoWatch : true,
 
-    autoWatch : true,
+		frameworks: ['jasmine'],
 
-    frameworks: ['jasmine'],
+		browsers : ['Chrome', 'Firefox'],
 
-    browsers : ['Chrome', 'Firefox'],
+		plugins : [
+			'karma-chrome-launcher',
+			'karma-firefox-launcher',
+			'karma-jasmine',
+			'karma-junit-reporter'
+		],
 
-    plugins : [
-            'karma-chrome-launcher',
-            'karma-firefox-launcher',
-            'karma-jasmine',
-            'karma-junit-reporter'
-            ],
-
-    junitReporter : {
-      outputFile: 'test_out/unit.xml',
-      suite: 'unit'
-    }
-
-  });
+		junitReporter : {
+			outputFile: 'test_out/unit.xml',
+			suite: 'unit'
+		}
+	});
 };
