@@ -2,26 +2,42 @@
 
 /* https://github.com/angular/protractor/blob/master/docs/toc.md */
 
-describe('my app', function() {
+describe('Initial registration process', function() {
 
-  browser.get('index.html');
+	browser.get('/');
 
-  it('should automatically redirect to /register when location hash/fragment is empty', function() {
-    expect(browser.getLocationAbsUrl()).toMatch("/register");
-  });
-
-
-  describe('register', function() {
-
-    beforeEach(function() {
-      browser.get('index.html#/register');
-    });
+	it('should automatically redirect to /register when location hash/fragment is empty', function() {
+		expect(browser.getLocationAbsUrl()).toMatch("/register");
+	});
 
 
-    it('should render the registration form when user navigates to /register', function() {
-      expect(element.all(by.css('[ng-view] h2')).first().getText()).
-        toMatch('Group pre-registration');
-    });
+	describe('by registering', function() {
 
-  });
+		beforeEach(function() {
+			browser.get('/register');
+		});
+
+
+		it('should render the registration form without user information', function() {
+			expect(element.all(by.css('[ng-view] h2')).first().getText()).
+				toMatch('Group pre-registration');
+		});
+		it('should have the submit button disabled by default', function() {
+			var button = element(by.css('button.md-button.md-primary'));
+			expect(button.isEnabled()).toBe(false);
+		})
+		describe('with the agreement checked', function() {
+			element.all(by.css('md-checkbox')).first().click();
+
+			it('should now have an enabled submit button', function() {
+				var button = element(by.css('button.md-button.md-primary'));
+				expect(button.isEnabled()).toBe(false);
+			});
+
+			it('the form should not be submittable', function() {
+				var button = element(by.css('button.md-button.md-primary'));
+				expect(button.click());
+			});
+		});
+	});
 });
