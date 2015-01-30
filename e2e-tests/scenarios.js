@@ -1,6 +1,20 @@
 'use strict';
 
-/* https://github.com/angular/protractor/blob/master/docs/toc.md */
+var request = require('request');
+
+beforeEach(function () {
+	protractor.promise.controlFlow().execute(function() {
+		var defer = protractor.promise.defer();
+		request(browser.baseUrl + '/test_is_integration', function(error, response, body) {
+			if (!error && response.statusCode == 418 && body == 'true') {
+				defer.fulfill(body);
+			} else {
+				defer.reject('Not running against integration!');
+			}
+		});
+		return defer.promise;
+	})
+});
 
 describe('Initial registration process', function() {
 

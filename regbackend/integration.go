@@ -39,6 +39,10 @@ func main() {
 		w.WriteHeader(200)
 	})
 	mux.HandleFunc("/", muxTest)
+	mux.HandleFunc("/test_is_integration", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTeapot)
+		w.Write([]byte("true"))
+	})
 
 	l, err := net.Listen("tcp", httpConfig.Listen)
 	if err != nil {
