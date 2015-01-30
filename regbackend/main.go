@@ -9,11 +9,14 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/spacemonkeygo/errors"
 	"github.com/spacemonkeygo/errors/errhttp"
-	"github.com/spacemonkeygo/flagfile"
 	goflagutils "github.com/spacemonkeygo/flagfile/utils"
+)
+
+var (
+	SetupErrors = errors.NewClass("Error during setup")
 )
 
 var httpConfig struct {
@@ -32,6 +35,7 @@ var generalConfig struct {
 	Database            string `default:"records.bolt" usage:"Location to store the database"`
 	AccessToken         string `usage:"Token to access database.  Generated randomly and printed if not set"`
 	StaticFilesLocation string `default:"../app" usage:"Location of static files for the site"`
+	Integration         bool   `default:"false" usage:"Set when running an integration binary for testing."`
 }
 
 func init() {
@@ -75,7 +79,7 @@ func (h *grabDb) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return tx.Copy(w)
 	})
 	if err != nil {
-		log.Panicf("Got error copy database %s", err)
+		log.Panicf("Got error while copying database %s", err)
 	}
 }
 
@@ -83,20 +87,18 @@ func httpError(w http.ResponseWriter, err error) {
 	http.Error(w, errhttp.GetErrorBody(err), errhttp.GetStatusCode(err, 500))
 }
 
-func main() {
-	flagfile.Load()
+type httpRouter interface {
+	Handle(string, http.Handler)
+	HandleFunc(string, func(http.ResponseWriter, *http.Request))
+}
 
+func setupStandardHandlers(globalRouter httpRouter, db *bolt.DB) error {
 	r := mux.NewRouter()
 	apiR := r.PathPrefix("/api/").Subrouter()
 
-	db, err := bolt.Open(generalConfig.Database, 0600, &bolt.Options{Timeout: 1})
-	if err != nil {
-		log.Fatalf("Failed to open bolt database, err: %s", err)
-	}
-
 	gprdb, err := NewPreRegBoltDb(db)
 	if err != nil {
-		log.Fatalf("Failed to get group preregistration database started, err %s", err)
+		return SetupErrors.New("Failed to get group preregistration database started", err)
 	}
 
 	ces := NewConfirmationEmailService(generalConfig.Domain, emailConfig.FromAddress, emailConfig.FromName, emailConfig.ContactEmail, NewLocalMailder(emailConfig.Server), gprdb)
@@ -107,23 +109,23 @@ func main() {
 	if key == "" {
 		var random [32]byte
 		if _, err := rand.Read(random[:]); err != nil {
-			log.Fatalf("During startup, failed to get entropy with error %s", err)
+			return SetupErrors.New("During startup, failed to get entropy", err)
 		}
 		key = base64.URLEncoding.EncodeToString(random[:])
 		log.Print("DB Token: ", key)
 	}
 	apiR.Handle("/grabdb", &grabDb{db}).Headers("X-My-Auth-Token", key).Methods("GET").Queries("key", key)
 
-	http.Handle("/api/", r)
+	globalRouter.Handle("/api/", r)
 	otherFiles := http.FileServer(http.Dir(generalConfig.StaticFilesLocation))
-	http.Handle("/app.css", otherFiles)
-	http.Handle("/app.js", otherFiles)
-	http.Handle("/components/", otherFiles)
-	http.Handle("/views/", otherFiles)
-	http.Handle("/bower_components/", otherFiles)
+	globalRouter.Handle("/app.css", otherFiles)
+	globalRouter.Handle("/app.js", otherFiles)
+	globalRouter.Handle("/components/", otherFiles)
+	globalRouter.Handle("/views/", otherFiles)
+	globalRouter.Handle("/bower_components/", otherFiles)
 	indexLocation := generalConfig.StaticFilesLocation + "/index.html"
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	globalRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, indexLocation)
 	})
-	panic(http.ListenAndServe(httpConfig.Listen, handlers.CompressHandler(&requestLogger{http.DefaultServeMux})))
+	return nil
 }
