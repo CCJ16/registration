@@ -16,13 +16,13 @@ addons:
 
 install:
   - go get -v -t ./...
-  - pushd regbackend && go build -v && popd
+  - pushd regbackend && go build -v && go build -v -tags integration && popd
   - npm install
 
 before_script:
   - export DISPLAY=:99.0
   - if [[ $REMOTE == 0 ]]; then sh -e /etc/init.d/xvfb start; fi
-  - cd regbackend && ./regbackend -http.listen=localhost:9090 >/dev/null &
+  - cd regbackend && ./regbackend -flagfile=flags.test >/dev/null &
   - npm run update-webdriver
   - sleep 1 # give server time to start
 
@@ -32,3 +32,6 @@ script:
   - if [[ $REMOTE == 0 ]]; then node_modules/.bin/protractor e2e-tests/protractor.conf.js --browser=firefox; fi
   - if [[ $REMOTE == 1 ]]; then node_modules/.bin/karma start karma-remote.conf.js --no-auto-watch --single-run --reporters=dots,saucelabs; fi
   - if [[ $REMOTE == 1 ]]; then node_modules/.bin/protractor e2e-tests/protractor-remote.conf.js; fi
+
+after_script:
+  - killall regbackend

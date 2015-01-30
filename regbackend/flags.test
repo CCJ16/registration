@@ -1,0 +1,15 @@
+[email]
+contactemail = info@test
+fromaddress = no-reply@test
+fromname = Test Name
+server = localhost:9025
+
+[http]
+listen = :9090
+
+[main]
+accesstoken = accesstoken
+database = /tmp/records.bolt
+domain = localhost:9090
+staticfileslocation = ../app
+integration = true
