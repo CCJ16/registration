@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/handlers"
@@ -22,6 +23,7 @@ var currentHandlerId int
 var handlerForCookieLock sync.Mutex
 var dbs []*bolt.DB
 var dbsLock sync.Mutex
+var wg sync.WaitGroup
 
 func main() {
 	c := make(chan os.Signal, 1)
@@ -46,13 +48,20 @@ func main() {
 		<-c
 		l.Close()
 	}(c)
-	if err := http.Serve(l, handlers.CompressHandler(&requestLogger{mux})); err != nil {
+	server := http.Server{
+		Handler:      handlers.CompressHandler(&requestLogger{mux}),
+		ReadTimeout:  time.Second * 60,
+		WriteTimeout: time.Second * 60,
+		ConnState:    ConnectionAccounting,
+	}
+	if err := server.Serve(l); err != nil {
 		if oe, ok := err.(*net.OpError); ok && oe.Op == "accept" && oe.Net == "tcp" && oe.Err.Error() == "use of closed network connection" {
 			log.Print("Port nicely closed")
 		} else {
 			log.Fatalf("%#v", err)
 		}
 	}
+	wg.Wait()
 	dbsLock.Lock()
 	defer dbsLock.Unlock()
 	for _, db := range dbs {
@@ -64,6 +73,15 @@ func main() {
 		}
 	}
 	log.Print("Cleanly done")
+}
+
+func ConnectionAccounting(_ net.Conn, state http.ConnState) {
+	switch state {
+	case http.StateNew:
+		wg.Add(1)
+	case http.StateClosed:
+		wg.Done()
+	}
 }
 
 func muxTest(w http.ResponseWriter, r *http.Request) {
