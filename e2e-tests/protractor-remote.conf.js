@@ -42,7 +42,7 @@ exports.config = {
 	}
 };
 function addCommon(capabilities) {
-	var buildLabel = 'TRAVIS #' + process.env.TRAVIS_JOB_NUMBER + ' (' + process.env.TRAVIS_JOB_ID + ')';
+	var buildLabel = 'TRAVIS #' + process.env.TRAVIS_BUILD_NUMBER + ' (' + process.env.TRAVIS_BUILD_ID + ')';
 	if (process.env.TRAVIS) {
 		return {
 			'tunnel-identifier': process.env.TRAVIS_JOB_NUMBER,
