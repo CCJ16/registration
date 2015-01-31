@@ -14,29 +14,6 @@ module.exports = function(config){
 			browserName: 'firefox',
 			version: '35',
 		},
-		'SL_Safari': {
-			base: 'SauceLabs',
-			browserName: 'safari',
-			platform: 'OS X 10.10',
-			version: '8',
-		},
-		'SL_iOS': {
-			base: 'SauceLabs',
-			browserName: 'iphone',
-			platform: 'OS X 10.10',
-			version: '8.1',
-			'device-orientation': 'portrait',
-		},
-		'SL_Android': {
-			base: 'SauceLabs',
-			browserName: 'android',
-			version: '4.4',
-		},
-		'SL_IE_10': {
-			base: 'SauceLabs',
-			browserName: 'internet explorer',
-			version: 10,
-		},
 		'SL_IE_11': {
 			base: 'SauceLabs',
 			browserName: 'internet explorer',
