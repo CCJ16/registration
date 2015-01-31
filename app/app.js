@@ -15,16 +15,17 @@ angular.module('ccj16reg', [
 }])
 .config(function($mdThemingProvider) {
 	$mdThemingProvider.theme('default')
-		.primaryColor('yellow', {
+		.primaryPalette('yellow', {
 			'default': '500',
 			'hue-1': 'A200',
 			'hue-2': 'A400',
 			'hue-3': '400',
 		})
-		.accentColor('red', {
+		.accentPalette('red', {
 			'default': '900',
+			'hue-1': '500',
 		})
-		.backgroundColor('grey', {
+		.backgroundPalette('grey', {
 			'default': '100',
 		});
 })
