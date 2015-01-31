@@ -10,9 +10,13 @@ describe('Initial registration process', function() {
 	});
 
 	describe('by registering', function() {
-		it('should render the registration form without user information', function() {
+		it('should render the registration form without user information in the main header', function() {
+			expect(element.all(by.css('h1')).first().getText()).
+				toBe('CCJ16 Pre-registration');
+		});
+		it('should render the registration form in the view', function() {
 			expect(element.all(by.css('[ng-view] h2')).first().getText()).
-				toMatch('Group pre-registration');
+				toBe('Group pre-registration');
 		});
 		it('should have the submit button disabled by default', function() {
 			var button = element(by.css('button.md-button.md-primary'));
