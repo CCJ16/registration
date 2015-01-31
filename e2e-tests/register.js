@@ -35,7 +35,7 @@ describe('Initial registration process', function() {
 
 			describe('the form should be submittable when filled in', function() {
 				beforeEach(function() {
-					element(by.model('registration.council')).sendKeys('Test Concil');
+					element(by.model('registration.council')).sendKeys('Test Council');
 					element(by.model('registration.groupName')).sendKeys('Test Group');
 
 					element(by.model('registration.contactLeaderFirstName')).sendKeys('FirstN');
