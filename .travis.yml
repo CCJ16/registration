@@ -29,9 +29,9 @@ before_script:
 script:
   - go test -v ./...
   - if [[ $REMOTE == 0 ]]; then node_modules/.bin/karma start karma.conf.js --no-auto-watch --single-run --reporters=dots --browsers=Firefox; fi
-  - if [[ $REMOTE == 0 ]]; then node_modules/.bin/protractor e2e-tests/protractor.conf.js --browser=firefox; fi
+  - if [[ $REMOTE == 0 ]]; then node_modules/.bin/protractor protractor.conf.js --browser=firefox; fi
   - if [[ $REMOTE == 1 ]]; then node_modules/.bin/karma start karma-remote.conf.js --no-auto-watch --single-run --reporters=dots,saucelabs; fi
-  - if [[ $REMOTE == 1 ]]; then node_modules/.bin/protractor e2e-tests/protractor-remote.conf.js; fi
+  - if [[ $REMOTE == 1 ]]; then node_modules/.bin/protractor protractor-remote.conf.js; fi
 
 after_script:
   - killall regbackend
