@@ -50,7 +50,7 @@ describe('Initial registration process', function() {
 
 				it('should then redirect to /registration/...', function() {
 					expect(browser.getLocationAbsUrl()).toMatch("/registration/");
-				});
+				}, 60000);
 			});
 		});
 	});
