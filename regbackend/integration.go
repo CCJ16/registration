@@ -120,6 +120,33 @@ func muxTest(w http.ResponseWriter, r *http.Request) {
 	handler.ServeHTTP(w, r)
 }
 
+type dbWiper struct {
+	db *bolt.DB
+}
+
+func (d *dbWiper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	err := d.db.Update(func(tx *bolt.Tx) error {
+		return tx.ForEach(func(k []byte, b *bolt.Bucket) error {
+			return b.ForEach(func(k, v []byte) error {
+				if v == nil {
+					if err := b.DeleteBucket(k); err != nil {
+						return err
+					}
+				} else {
+					if err := b.Delete(k); err != nil {
+						return err
+					}
+				}
+				return nil
+			});
+		});
+	})
+	if err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
 func setupNewHandlers() http.Handler {
 	file, err := ioutil.TempFile("", "records")
 	if err != nil {
@@ -135,5 +162,7 @@ func setupNewHandlers() http.Handler {
 	dbsLock.Unlock()
 	mux := http.NewServeMux()
 	setupStandardHandlers(mux, db)
+	mux.Handle("/integration/wipe_database", &dbWiper{db})
+	mux.HandleFunc("/integration/", http.NotFound)
 	return mux
 }
