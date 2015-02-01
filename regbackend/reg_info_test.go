@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/CCJ16/registration/regbackend/boltorm"
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/mux"
 
@@ -310,7 +311,7 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 			So(db.Close(), ShouldBeNil)
 		})
 
-		prdb, err := NewPreRegBoltDb(db)
+		prdb, err := NewPreRegBoltDb(boltorm.NewBoltDB(db))
 		So(err, ShouldBeNil)
 
 		Convey("Inserting a group", func() {

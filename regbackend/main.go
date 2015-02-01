@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/CCJ16/registration/regbackend/boltorm"
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/mux"
 	"github.com/spacemonkeygo/errors"
@@ -94,9 +95,10 @@ type httpRouter interface {
 
 func setupStandardHandlers(globalRouter httpRouter, db *bolt.DB) error {
 	r := mux.NewRouter()
+	ormDb := boltorm.NewBoltDB(db)
 	apiR := r.PathPrefix("/api/").Subrouter()
 
-	gprdb, err := NewPreRegBoltDb(db)
+	gprdb, err := NewPreRegBoltDb(ormDb)
 	if err != nil {
 		return SetupErrors.New("Failed to get group preregistration database started", err)
 	}

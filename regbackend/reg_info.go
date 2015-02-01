@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/binary"
 	"fmt"
 	"strings"
 
@@ -16,10 +15,9 @@ import (
 	"github.com/gorilla/mux"
 
 	"bytes"
-	"encoding/gob"
 	"time"
 
-	"github.com/boltdb/bolt"
+	"github.com/CCJ16/registration/regbackend/boltorm"
 
 	"github.com/spacemonkeygo/errors"
 	"github.com/spacemonkeygo/errors/errhttp"
@@ -128,10 +126,10 @@ var (
 )
 
 type preRegDbBolt struct {
-	db *bolt.DB
+	db boltorm.DB
 }
 
-func NewPreRegBoltDb(db *bolt.DB) (PreRegDb, error) {
+func NewPreRegBoltDb(db boltorm.DB) (PreRegDb, error) {
 	prdb := &preRegDbBolt{
 		db: db,
 	}
@@ -141,106 +139,49 @@ func NewPreRegBoltDb(db *bolt.DB) (PreRegDb, error) {
 	return prdb, nil
 }
 
-func insertUpdate(tx *bolt.Tx, update GroupPreRegistration, bucket *bolt.Bucket) error {
-	data := &bytes.Buffer{}
-	encoder := gob.NewEncoder(data)
-	if err := encoder.Encode(update); err != nil {
-		return err
-	}
-	if nextInt, err := bucket.NextSequence(); err != nil {
-		return err
-	} else {
-		buf := new(bytes.Buffer)
-		if err = binary.Write(buf, binary.BigEndian, nextInt); err != nil {
-			return err
-		} else if err = bucket.Put(buf.Bytes(), data.Bytes()); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (d *preRegDbBolt) CreateRecord(in *GroupPreRegistration) error {
 	if err := in.PrepareForInsert(); err != nil {
 		return err
 	}
-	return d.db.Update(func(tx *bolt.Tx) error {
-		gb := tx.Bucket(BOLT_GROUPBUCKET)
-		gnmb := tx.Bucket(BOLT_GROUPNAMEMAPBUCKET)
-		gemb := tx.Bucket(BOLT_GROUPEMAILMAPBUCKET)
-		if gb.Get(in.Key()) != nil {
-			log.Printf("Managed to get a duplicate security key somehow!")
-			return GroupAlreadyCreated.New(fmt.Sprintf("Group with security key %v already exists", in.Key()), errhttp.OverrideErrorBody("Temporary fatal error creating registration.  Please retry."))
-		} else if gnmb.Get([]byte(in.OrganicKey())) != nil {
-			return GroupAlreadyCreated.New("%s of %s, with pack name %s", in.GroupName, in.Council, in.PackName)
-		} else if gemb.Get([]byte(in.ContactLeaderEmail)) != nil {
-			return GroupAlreadyCreated.New("A previous group already registered with contact email address %s\n", in.ContactLeaderEmail)
-		} else {
-			if bucket, err := gb.CreateBucketIfNotExists(in.Key()); err != nil {
-				return err
-			} else if err := insertUpdate(tx, *in, bucket); err != nil {
-				return err
-			}
+	err := d.db.Update(func(tx boltorm.Tx) error {
+		key := in.Key()
+		if err := tx.Insert(BOLT_GROUPBUCKET, key, in); err != nil {
+			return err
+		} else if err := tx.AddIndex(BOLT_GROUPNAMEMAPBUCKET, []byte(in.OrganicKey()), key); err != nil {
+			return err
+		} else if err := tx.AddIndex(BOLT_GROUPEMAILMAPBUCKET, []byte(in.ContactLeaderEmail), key); err != nil {
+			return err
+		}
+		return nil
+	})
+	if boltorm.ErrKeyAlreadyExists.Contains(err) {
+		return GroupAlreadyCreated.New("Could not insert preregistration")
+	} else {
+		return err
+	}
+}
 
-			if err := gnmb.Put([]byte(in.OrganicKey()), in.Key()); err != nil {
-				return err
-			}
-			if err := gemb.Put([]byte(in.ContactLeaderEmail), in.Key()); err != nil {
+func (d *preRegDbBolt) GetRecord(securityKey string) (rec *GroupPreRegistration, err error) {
+	return rec, d.db.View(func(tx boltorm.Tx) error {
+		res := &GroupPreRegistration{}
+		if key, err := base64.URLEncoding.DecodeString(securityKey); err != nil {
+			return err
+		} else if err = tx.Get(BOLT_GROUPBUCKET, key, res); err != nil {
+			if boltorm.ErrKeyDoesNotExist.Contains(err) {
+				return RecordDoesNotExist.New("Could not find preregistration")
+			} else {
 				return err
 			}
 		}
+		rec = res
 		return nil
 	})
 }
 
-func fetchRecordWithNativeKey(tx *bolt.Tx, key []byte, origKey string) (rec *GroupPreRegistration, bucket *bolt.Bucket, err error) {
-	gb := tx.Bucket(BOLT_GROUPBUCKET)
-	bucket = gb.Bucket(key)
-	if bucket == nil {
-		return nil, nil, RecordDoesNotExist.New("Record for key %s does not exist", origKey)
-	}
-	_, data := bucket.Cursor().Last()
-	if data == nil {
-		return nil, nil, RecordDoesNotExist.New("Record for key %s does not exist", origKey)
-	}
-	decoder := gob.NewDecoder(bytes.NewReader(data))
-	var res GroupPreRegistration
-	if err = decoder.Decode(&res); err != nil {
-		return nil, nil, err
-	} else {
-		return &res, bucket, err
-	}
-}
-
-func fetchRecordWithSecurityKey(tx *bolt.Tx, securityKey string) (rec *GroupPreRegistration, bucket *bolt.Bucket, err error) {
-	key, err := base64.URLEncoding.DecodeString(securityKey)
-	if err != nil {
-		return nil, nil, err
-	}
-	return fetchRecordWithNativeKey(tx, key, securityKey)
-}
-
-func fetchRecordWithEmail(tx *bolt.Tx, email string) (rec *GroupPreRegistration, bucket *bolt.Bucket, err error) {
-	gemb := tx.Bucket(BOLT_GROUPEMAILMAPBUCKET)
-	key := gemb.Get([]byte(email))
-	if key == nil {
-		return nil, nil, RecordDoesNotExist.New("Record for key %s does not exist", email)
-	}
-	return fetchRecordWithNativeKey(tx, key, email)
-}
-
-func (d *preRegDbBolt) GetRecord(securityKey string) (rec *GroupPreRegistration, err error) {
-	return rec, d.db.View(func(tx *bolt.Tx) error {
-		res, _, err := fetchRecordWithSecurityKey(tx, securityKey)
-		rec = res
-		return err
-	})
-}
-
 func (d *preRegDbBolt) NoteConfirmationEmailSent(gpr *GroupPreRegistration) error {
-	err := d.db.Update(func(tx *bolt.Tx) error {
-		rec, bucket, err := fetchRecordWithSecurityKey(tx, gpr.SecurityKey)
-		if err != nil {
+	err := d.db.Update(func(tx boltorm.Tx) error {
+		rec := &GroupPreRegistration{}
+		if err := tx.Get(BOLT_GROUPBUCKET, gpr.Key(), rec); err != nil {
 			return err
 		}
 
@@ -249,18 +190,16 @@ func (d *preRegDbBolt) NoteConfirmationEmailSent(gpr *GroupPreRegistration) erro
 		}
 
 		rec.EmailConfirmationSent = true
-		insertUpdate(tx, *rec, bucket)
-
-		return nil
+		return tx.Update(BOLT_GROUPBUCKET, rec.Key(), rec)
 	})
 	gpr.EmailConfirmationSent = true
 	return err
 }
 
 func (d *preRegDbBolt) VerifyEmail(email, token string) error {
-	return d.db.Update(func(tx *bolt.Tx) error {
-		rec, bucket, err := fetchRecordWithEmail(tx, email)
-		if err != nil {
+	return d.db.Update(func(tx boltorm.Tx) error {
+		rec := &GroupPreRegistration{}
+		if err := tx.GetByIndex(BOLT_GROUPEMAILMAPBUCKET, BOLT_GROUPBUCKET, []byte(email), rec); err != nil {
 			return BadVerificationToken.New("Failed to verify token")
 		}
 
@@ -273,21 +212,19 @@ func (d *preRegDbBolt) VerifyEmail(email, token string) error {
 		}
 
 		rec.ValidatedOn = time.Now()
-		insertUpdate(tx, *rec, bucket)
-
-		return nil
+		return tx.Update(BOLT_GROUPBUCKET, rec.Key(), rec)
 	})
 }
 
 func (d *preRegDbBolt) init() error {
-	return d.db.Update(func(tx *bolt.Tx) error {
-		if _, err := tx.CreateBucketIfNotExists(BOLT_GROUPBUCKET); err != nil {
+	return d.db.Update(func(tx boltorm.Tx) error {
+		if err := tx.CreateBucketIfNotExists(BOLT_GROUPBUCKET); err != nil {
 			return err
 		}
-		if _, err := tx.CreateBucketIfNotExists(BOLT_GROUPNAMEMAPBUCKET); err != nil {
+		if err := tx.CreateBucketIfNotExists(BOLT_GROUPNAMEMAPBUCKET); err != nil {
 			return err
 		}
-		if _, err := tx.CreateBucketIfNotExists(BOLT_GROUPEMAILMAPBUCKET); err != nil {
+		if err := tx.CreateBucketIfNotExists(BOLT_GROUPEMAILMAPBUCKET); err != nil {
 			return err
 		}
 		return nil
