@@ -138,8 +138,8 @@ func (d *dbWiper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 				return nil
-			});
-		});
+			})
+		})
 	})
 	if err != nil {
 		log.Print(err)
