@@ -148,10 +148,19 @@ func (d *preRegDbBolt) CreateRecord(in *GroupPreRegistration) error {
 		if err := tx.Insert(BOLT_GROUPBUCKET, key, in); err != nil {
 			return err
 		} else if err := tx.AddIndex(BOLT_GROUPNAMEMAPBUCKET, []byte(in.OrganicKey()), key); err != nil {
-			return err
+			if boltorm.ErrKeyAlreadyExists.Contains(err) {
+				return GroupAlreadyCreated.New("Group %s of %s, with pack name %s already exists", in.GroupName, in.Council, in.PackName)
+			} else {
+				return err
+			}
 		} else if err := tx.AddIndex(BOLT_GROUPEMAILMAPBUCKET, []byte(in.ContactLeaderEmail), key); err != nil {
-			return err
+			if boltorm.ErrKeyAlreadyExists.Contains(err) {
+				return GroupAlreadyCreated.New("A previous group already registered with contact email address %s", in.ContactLeaderEmail)
+			} else {
+				return err
+			}
 		}
+		log.Print(in.ValidatedOn)
 		return nil
 	})
 	if boltorm.ErrKeyAlreadyExists.Contains(err) {

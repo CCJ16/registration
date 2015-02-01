@@ -6,6 +6,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	"github.com/CCJ16/registration/regbackend/boltorm"
 )
 
 type testEmail struct {
@@ -31,7 +33,8 @@ func TestEmailRequest(t *testing.T) {
 	fromAddress := "testsender@examplesending.com"
 	Convey("With mock instance for end services", t, func() {
 		testEmailSender := &testEmailSender{}
-		testPreRegDb := &testPreRegDb{}
+		testPreRegDb, err := NewPreRegBoltDb(boltorm.NewMemoryDB())
+		So(err, ShouldBeNil)
 
 		ces := NewConfirmationEmailService("examplesite.com", fromAddress, "Test Sender Name", "info@infoexample.com", testEmailSender, testPreRegDb)
 		Convey("With a valid unconfirmed group preregistration", func() {

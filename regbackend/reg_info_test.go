@@ -20,71 +20,6 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-type testPreRegDb struct {
-	entries [][]GroupPreRegistration
-}
-
-func (db *testPreRegDb) CreateRecord(in *GroupPreRegistration) error {
-	if err := in.PrepareForInsert(); err != nil {
-		return err
-	}
-	for _, rec := range db.entries {
-		if rec[len(rec)-1].OrganicKey() == in.OrganicKey() {
-			return GroupAlreadyCreated.New("Group %s of %s, with pack name %s already exists", in.GroupName, in.Council, in.PackName)
-		}
-		if rec[len(rec)-1].ContactLeaderEmail == in.ContactLeaderEmail {
-			return GroupAlreadyCreated.New("A previous group already registered with contact email address %s\n", in.ContactLeaderEmail)
-		}
-	}
-	db.entries = append(db.entries, []GroupPreRegistration{*in})
-	return nil
-}
-
-func (d *testPreRegDb) GetRecord(securityKey string) (rec *GroupPreRegistration, err error) {
-	for _, rec := range d.entries {
-		if rec[0].SecurityKey == securityKey {
-			return &rec[len(rec)-1], nil
-		}
-	}
-	return nil, RecordDoesNotExist.New("Record with given key (%s) does not exist.", securityKey)
-}
-
-func (d *testPreRegDb) VerifyEmail(email, token string) error {
-	recLoc := -1
-	for i, rec := range d.entries {
-		if rec[len(rec)-1].ContactLeaderEmail == email {
-			recLoc = i
-		}
-	}
-	if recLoc == -1 {
-		return BadVerificationToken.New("Failed to verify key")
-	}
-	recArray := d.entries[recLoc]
-	rec := &recArray[len(recArray)-1]
-	if rec.ValidationToken == token {
-		rec.ValidatedOn = time.Now()
-		return nil
-	}
-	return BadVerificationToken.New("Failed to verify key")
-}
-
-func (d *testPreRegDb) NoteConfirmationEmailSent(gpr *GroupPreRegistration) error {
-	recLoc := -1
-	for i, rec := range d.entries {
-		if rec[0].SecurityKey == gpr.SecurityKey {
-			recLoc = i
-		}
-	}
-	if recLoc == -1 {
-		return RecordDoesNotExist.New("Record with given key (%s) does not exist.", gpr.SecurityKey)
-	}
-	rec := d.entries[recLoc][len(d.entries[recLoc])-1]
-	rec.EmailConfirmationSent = true
-	d.entries[recLoc] = append(d.entries[recLoc], rec)
-	gpr.EmailConfirmationSent = true
-	return nil
-}
-
 func TestPreRegCreateRequest(t *testing.T) {
 	Convey("Starting with a Group Pre Registration handler", t, func() {
 		goodRecord := GroupPreRegistration{
@@ -101,7 +36,9 @@ func TestPreRegCreateRequest(t *testing.T) {
 			goodRecordBody.Write(bytes)
 		}
 
-		prdb := &testPreRegDb{}
+		db := boltorm.NewMemoryDB()
+		prdb, err := NewPreRegBoltDb(db)
+		So(err, ShouldBeNil)
 		router := mux.NewRouter()
 		testEmailSender := &testEmailSender{}
 		ces := NewConfirmationEmailService("examplesite.com", "no-reply@examplesender.com", "no-reply", "info@infoexample.com", testEmailSender, prdb)
@@ -156,33 +93,72 @@ func TestPreRegCreateRequest(t *testing.T) {
 				So(newRec.ValidatedOn, ShouldHappenWithin, time.Second, goodRecord.ValidatedOn)
 				newRec.ValidatedOn = goodRecord.ValidatedOn
 				So(newRec, ShouldResemble, goodRecord)
-				Convey("With a matching security key to the database", func() {
-					So(prdb.entries[0][0].SecurityKey, ShouldEqual, newRec.SecurityKey)
+
+				Convey("Should be inserted into the database", func() {
+					dbRec, err := prdb.GetRecord(newRec.SecurityKey)
+					Convey("As we didn't get an error", func() {
+						So(err, ShouldBeNil)
+						Convey("And the data matches", func() {
+							So(newRec.EmailApprovalGivenAt, ShouldHappenWithin, time.Second, dbRec.EmailApprovalGivenAt)
+							dbRec.EmailApprovalGivenAt = newRec.EmailApprovalGivenAt
+							So(newRec.ValidatedOn, ShouldHappenWithin, time.Second, dbRec.ValidatedOn)
+							dbRec.ValidatedOn = newRec.ValidatedOn
+							dbRec.ValidationToken = newRec.ValidationToken
+							dbRec.EmailConfirmationSent = newRec.EmailConfirmationSent
+
+							So(*dbRec, ShouldResemble, newRec)
+						})
+						Convey("And sending a request to confirm the correct email address with the correct code", func() {
+							buf := bytes.NewReader([]byte(dbRec.ValidationToken))
+							r, err := http.NewRequest("PUT", "http://localhost:8080/confirmpreregistration?email="+goodRecord.ContactLeaderEmail, buf)
+							So(err, ShouldBeNil)
+							w := httptest.NewRecorder()
+
+							router.ServeHTTP(w, r)
+							Convey("Should return a 200 status code", func() {
+								So(w.Code, ShouldEqual, 200)
+								Convey("And set the contact is validated.", func() {
+									dbRec, err := prdb.GetRecord(newRec.SecurityKey)
+									So(err, ShouldBeNil)
+									So(dbRec.ValidatedOn, ShouldHappenWithin, time.Second*1, time.Now())
+								})
+							})
+						})
+						Convey("And sending a request to confirm the correct email address with the wrong code", func() {
+							buf := bytes.NewReader([]byte("BadToken"))
+							r, err := http.NewRequest("PUT", "http://localhost:8080/confirmpreregistration?email="+goodRecord.ContactLeaderEmail, buf)
+							So(err, ShouldBeNil)
+							w := httptest.NewRecorder()
+
+							router.ServeHTTP(w, r)
+							Convey("Should return a 200 status code", func() {
+								So(w.Code, ShouldEqual, 400)
+								Convey("And set the contact is not validated.", func() {
+									dbRec, err := prdb.GetRecord(newRec.SecurityKey)
+									So(err, ShouldBeNil)
+									So(dbRec.ValidatedOn, ShouldHappenWithin, time.Second*0, time.Time{})
+								})
+							})
+						})
+						Convey("And sending a request to confirm the wrong email address with a code", func() {
+							buf := bytes.NewReader([]byte("BadToken"))
+							r, err := http.NewRequest("PUT", "http://localhost:8080/confirmpreregistration?email=abademail@invalid", buf)
+							So(err, ShouldBeNil)
+							w := httptest.NewRecorder()
+
+							router.ServeHTTP(w, r)
+							Convey("Should return a 200 status code", func() {
+								So(w.Code, ShouldEqual, 400)
+								Convey("And set the contact is not validated.", func() {
+									dbRec, err := prdb.GetRecord(newRec.SecurityKey)
+									So(err, ShouldBeNil)
+									So(dbRec.ValidatedOn, ShouldHappenWithin, time.Second*0, time.Time{})
+								})
+							})
+						})
+					})
 				})
 			})
-
-			Convey("Should be inserted into the database", func() {
-				So(len(prdb.entries), ShouldEqual, 1)
-				So(len(prdb.entries[0]), ShouldEqual, 2)
-				Convey("With the first record equal to second, modulo the email confirmation sent", func() {
-					tmpRec := prdb.entries[0][0]
-					tmpRec.EmailConfirmationSent = prdb.entries[0][1].EmailConfirmationSent
-					So(prdb.entries[0][1], ShouldResemble, tmpRec)
-				})
-				Convey("With the second record confirming the email sent", func() {
-					So(prdb.entries[0][1].EmailConfirmationSent, ShouldResemble, true)
-				})
-				Convey("And the first record matching the request, modulo the keys, and funky time business", func() {
-					goodRecord.SecurityKey = prdb.entries[0][0].SecurityKey
-					goodRecord.ValidationToken = prdb.entries[0][0].ValidationToken
-					So(prdb.entries[0][0].EmailApprovalGivenAt, ShouldHappenWithin, time.Second, goodRecord.EmailApprovalGivenAt)
-					prdb.entries[0][0].EmailApprovalGivenAt = goodRecord.EmailApprovalGivenAt
-					So(prdb.entries[0][0].ValidatedOn, ShouldHappenWithin, time.Second, goodRecord.ValidatedOn)
-					prdb.entries[0][0].ValidatedOn = goodRecord.ValidatedOn
-					So(prdb.entries[0][0], ShouldResemble, goodRecord)
-				})
-			})
-
 			Convey("And attempting to re create the same group", func() {
 				Convey("Should fail with an error if done again with the same group set", func() {
 					goodRecord.ContactLeaderEmail = "newemail@example.test"
@@ -233,48 +209,6 @@ func TestPreRegCreateRequest(t *testing.T) {
 				})
 			})
 
-			Convey("And sending a request to confirm the correct email address with the correct code", func() {
-				buf := bytes.NewReader([]byte(prdb.entries[0][1].ValidationToken))
-				r, err := http.NewRequest("PUT", "http://localhost:8080/confirmpreregistration?email="+goodRecord.ContactLeaderEmail, buf)
-				So(err, ShouldBeNil)
-				w := httptest.NewRecorder()
-
-				router.ServeHTTP(w, r)
-				Convey("Should return a 200 status code", func() {
-					So(w.Code, ShouldEqual, 200)
-					Convey("And set the contact is validated.", func() {
-						So(prdb.entries[0][len(prdb.entries[0])-1].ValidatedOn, ShouldHappenWithin, 5*time.Second, time.Now())
-					})
-				})
-			})
-			Convey("And sending a request to confirm the correct email address with the wrong code", func() {
-				buf := bytes.NewReader([]byte("BadToken"))
-				r, err := http.NewRequest("PUT", "http://localhost:8080/confirmpreregistration?email="+goodRecord.ContactLeaderEmail, buf)
-				So(err, ShouldBeNil)
-				w := httptest.NewRecorder()
-
-				router.ServeHTTP(w, r)
-				Convey("Should return a 200 status code", func() {
-					So(w.Code, ShouldEqual, 400)
-					Convey("And set the contact is not validated.", func() {
-						So(prdb.entries[0][len(prdb.entries[0])-1].ValidatedOn, ShouldHappenWithin, time.Second*0, time.Time{})
-					})
-				})
-			})
-			Convey("And sending a request to confirm the wrong email address with a code", func() {
-				buf := bytes.NewReader([]byte("BadToken"))
-				r, err := http.NewRequest("PUT", "http://localhost:8080/confirmpreregistration?email=abademail@invalid", buf)
-				So(err, ShouldBeNil)
-				w := httptest.NewRecorder()
-
-				router.ServeHTTP(w, r)
-				Convey("Should return a 200 status code", func() {
-					So(w.Code, ShouldEqual, 400)
-					Convey("And set the contact is not validated.", func() {
-						So(prdb.entries[0][len(prdb.entries[0])-1].ValidatedOn, ShouldHappenWithin, time.Second*0, time.Time{})
-					})
-				})
-			})
 		})
 
 		Convey("When given an empty body", func() {
@@ -288,9 +222,6 @@ func TestPreRegCreateRequest(t *testing.T) {
 
 			Convey("Should receive back a 400 code", func() {
 				So(w.Code, ShouldEqual, 400)
-			})
-			Convey("Shouldn't update the database", func() {
-				So(prdb.entries, ShouldBeEmpty)
 			})
 		})
 	})
