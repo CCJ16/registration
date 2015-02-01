@@ -23,7 +23,7 @@ describe('Registration information page', function() {
 					reg.estimatedYouth = 20;
 					reg.estimatedLeaders = 12;
 					reg.agreedToEmailTerms(true);
-					
+
 					reg.$save().then(function(savedObject) {
 						callback([true, savedObject]);
 					}, function() {
@@ -66,6 +66,55 @@ describe('Registration information page', function() {
 
 			expect(countBlock.all(by.css('div.form-redisplay')).get(0).element(by.tagName('p')).getText()).toBe('20');
 			expect(countBlock.all(by.css('div.form-redisplay')).get(1).element(by.tagName('p')).getText()).toBe('12');
+		});
+	});
+
+	describe('with no pack information submitted', function() {
+		var savedData;
+		beforeEach(function() {
+			var flow = protractor.promise.controlFlow();
+			flow.execute(function() {
+				var defer = protractor.promise.defer();
+				browser.executeAsyncScript(function(callback) {
+					registration = angular.injector(["ccj16reg"]).get("registration");
+					reg = new registration();
+					reg.council = "Test council";
+					reg.groupName = "Test group";
+					reg.packName = "Test pack";
+					reg.contactLeaderFirstName = "FirstN";
+					reg.contactLeaderLastName = "LastN";
+					reg.contactLeaderEmail = "test@invalid";
+					reg.contactLeaderPhoneNumber= "123-456-7890";
+					reg.estimatedYouth = 20;
+					reg.estimatedLeaders = 12;
+					reg.agreedToEmailTerms(true);
+
+					reg.$save().then(function(savedObject) {
+						callback([true, savedObject]);
+					}, function() {
+						callback([false]);
+					});
+				}).then(function(data) {
+					var success = data[0];
+					if (success) {
+						defer.fulfill(data[1]);
+					} else {
+						defer.reject("Failed to clear database");
+					}
+				});
+				defer.promise.then(function(data) {
+					savedData = data;
+					browser.get('/registration/' + data.securityKey);
+				});
+				return defer.promise;
+			});
+		});
+		it('should be on the proper page', function() {
+			expect(browser.getLocationAbsUrl()).toBe("/registration/" + savedData.securityKey);
+		});
+		it('should have the header include the council/group/pack name as appropriate', function() {
+			expect(element.all(by.css('h1')).first().getText()).
+				toBe('CCJ16 Pre-registration - Test group of Test council (Test pack)');
 		});
 	});
 });
