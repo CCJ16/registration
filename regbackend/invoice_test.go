@@ -12,7 +12,8 @@ import (
 func TestInvoiceStorage(t *testing.T) {
 	Convey("With a valid invoice system", t, func() {
 		db := boltorm.NewMemoryDB()
-		invDb := NewInvoiceDb(db)
+		invDb, err := NewInvoiceDb(db)
+		So(err, ShouldBeNil)
 
 		Convey("Requesting a new invoice should succeed", func() {
 			invoice := Invoice{

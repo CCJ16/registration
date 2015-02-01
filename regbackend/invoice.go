@@ -32,13 +32,13 @@ var (
 	BOLT_INVOICEBUCKET = []byte("BUCKET_INVOICES")
 )
 
-func NewInvoiceDb(db boltorm.DB) InvoiceDb {
+func NewInvoiceDb(db boltorm.DB) (InvoiceDb, error) {
 	if err := db.Update(func(tx boltorm.Tx) error {
 		return tx.CreateBucketIfNotExists(BOLT_INVOICEBUCKET)
 	}); err != nil {
-		panic(err)
+		return nil, err
 	}
-	return &invoiceDb{}
+	return &invoiceDb{}, nil
 }
 
 func (i *invoiceDb) NewInvoice(in *Invoice, tx boltorm.Tx) error {
