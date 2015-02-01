@@ -1,8 +1,6 @@
-package boltorm_test
+package boltorm
 
 import (
-	"github.com/CCJ16/registration/regbackend/boltorm"
-
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -10,7 +8,7 @@ import (
 
 func TestMemoryDb(t *testing.T) {
 	Convey("With a memory DB", t, func() {
-		db := boltorm.NewMemoryDB()
+		db := NewMemoryDB()
 		Convey("the standard tests work", sharedTests(db))
 	})
 }
