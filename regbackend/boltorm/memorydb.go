@@ -62,6 +62,19 @@ func (t *memoryTx) Insert(bucket, key []byte, data interface{}) error {
 	return nil
 }
 
+func (t *memoryTx) AddIndex(indexBucket, index, key []byte) error {
+	if !t.writable {
+		return ErrTxNotWritable.New("Could not insert record")
+	}
+
+	if (*t.buckets)[string(indexBucket)][string(index)] != nil {
+		return ErrKeyAlreadyExists.New("Could not insert index")
+	} else {
+		(*t.buckets)[string(indexBucket)][string(index)] = [][]byte{key}
+	}
+	return nil
+}
+
 func (t *memoryTx) Update(bucket, key []byte, data interface{}) error {
 	if !t.writable {
 		return ErrTxNotWritable.New("Could not insert record")
@@ -85,6 +98,20 @@ func (t *memoryTx) Get(bucket, key []byte, data interface{}) error {
 		return ErrKeyDoesNotExist.New("Failed to get record")
 	}
 	bytes := dataBucket[len(dataBucket)-1]
+	return decodeData(bytes, data)
+}
+
+func (t *memoryTx) GetByIndex(indexBucket, dataBucket, index []byte, data interface{}) error {
+	indexData := (*t.buckets)[string(indexBucket)][string(index)]
+	if indexData == nil {
+		return ErrKeyDoesNotExist.New("Failed to get key of record")
+	}
+	key := indexData[0]
+	dataBucketMap := (*t.buckets)[string(dataBucket)][string(key)]
+	if dataBucketMap == nil {
+		return ErrKeyDoesNotExist.New("Failed to get record")
+	}
+	bytes := dataBucketMap[len(dataBucketMap)-1]
 	return decodeData(bytes, data)
 }
 

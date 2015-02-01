@@ -20,6 +20,8 @@ type Tx interface {
 	CreateBucketIfNotExists(name []byte) error
 	Insert(bucket, key []byte, data interface{}) error
 	Update(bucket, key []byte, data interface{}) error
+	AddIndex(indexBucket, index, key []byte) error
 
 	Get(bucket, key []byte, data interface{}) error
+	GetByIndex(indexBucket, dataBucket, index []byte, data interface{}) error
 }
