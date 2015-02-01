@@ -98,7 +98,12 @@ func setupStandardHandlers(globalRouter httpRouter, db *bolt.DB) error {
 	ormDb := boltorm.NewBoltDB(db)
 	apiR := r.PathPrefix("/api/").Subrouter()
 
-	gprdb, err := NewPreRegBoltDb(ormDb)
+	invDb, err := NewInvoiceDb(ormDb)
+	if err != nil {
+		return SetupErrors.New("Failed to get invoice database started")
+	}
+
+	gprdb, err := NewPreRegBoltDb(ormDb, invDb)
 	if err != nil {
 		return SetupErrors.New("Failed to get group preregistration database started", err)
 	}

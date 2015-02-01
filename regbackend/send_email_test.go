@@ -33,7 +33,7 @@ func TestEmailRequest(t *testing.T) {
 	fromAddress := "testsender@examplesending.com"
 	Convey("With mock instance for end services", t, func() {
 		testEmailSender := &testEmailSender{}
-		testPreRegDb, err := NewPreRegBoltDb(boltorm.NewMemoryDB())
+		testPreRegDb, err := NewPreRegBoltDb(boltorm.NewMemoryDB(), nil)
 		So(err, ShouldBeNil)
 
 		ces := NewConfirmationEmailService("examplesite.com", fromAddress, "Test Sender Name", "info@infoexample.com", testEmailSender, testPreRegDb)

@@ -37,7 +37,9 @@ func TestPreRegCreateRequest(t *testing.T) {
 		}
 
 		db := boltorm.NewMemoryDB()
-		prdb, err := NewPreRegBoltDb(db)
+		invDb, err := NewInvoiceDb(db)
+		So(err, ShouldBeNil)
+		prdb, err := NewPreRegBoltDb(db, invDb)
 		So(err, ShouldBeNil)
 		router := mux.NewRouter()
 		testEmailSender := &testEmailSender{}
@@ -158,7 +160,33 @@ func TestPreRegCreateRequest(t *testing.T) {
 						})
 					})
 				})
+				Convey("And requesting an invoice should be error free", func() {
+					r, err := http.NewRequest("GET", "http://localhost:8080" + w.HeaderMap["Location"][0] + "/invoice", nil)
+					if err != nil {
+						t.Fatal(err)
+					}
+					w := httptest.NewRecorder()
+
+					router.ServeHTTP(w, r)
+
+					Convey("with a 200 status code", func() {
+						So(w.Code, ShouldEqual, 200)
+					})
+
+					Convey("Should get a valid invoice back.", func() {
+						inv := Invoice{}
+						So(json.NewDecoder(w.Body).Decode(&inv), ShouldBeNil)
+						Convey("And match the database", func() {
+							dbInv, err := prdb.CreateInvoiceIfNotExists(&newRec)
+							So(err, ShouldBeNil)
+							So(inv.Created, ShouldHappenWithin, 0*time.Second, dbInv.Created)
+							inv.Created = dbInv.Created
+							So(inv, ShouldResemble, *dbInv)
+						})
+					})
+				})
 			})
+
 			Convey("And attempting to re create the same group", func() {
 				Convey("Should fail with an error if done again with the same group set", func() {
 					goodRecord.ContactLeaderEmail = "newemail@example.test"
@@ -242,7 +270,10 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 			So(db.Close(), ShouldBeNil)
 		})
 
-		prdb, err := NewPreRegBoltDb(boltorm.NewBoltDB(db))
+		dbOrm := boltorm.NewBoltDB(db)
+		invDb, err := NewInvoiceDb(dbOrm)
+		So(err, ShouldBeNil)
+		prdb, err := NewPreRegBoltDb(dbOrm, invDb)
 		So(err, ShouldBeNil)
 
 		Convey("Inserting a group", func() {
@@ -378,6 +409,27 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 				})
 			})
 
+			Convey("And requesting an invoice should be error free", func() {
+				inv, err := prdb.CreateInvoiceIfNotExists(&rec)
+				So(err, ShouldBeNil)
+				Convey("With a matching set of invoice ids", func() {
+					So(inv.Id, ShouldEqual, rec.InvoiceId)
+				})
+				Convey("And the invoice should have", func() {
+					Convey("A valid to line", func() {
+						So(inv.To, ShouldEqual, "1st Testingway of Council rock (Pack A)")
+					})
+					Convey("With the single deposit item", func() {
+						So(inv.LineItems, ShouldResemble, []InvoiceItem{InvoiceItem{"Preregistration deposit", 25000, 1}})
+					})
+				})
+				Convey("And refetching the record should keep the same contents", func() {
+					inv2, err := prdb.CreateInvoiceIfNotExists(&rec)
+					So(err, ShouldBeNil)
+					So(inv2, ShouldResemble, inv)
+				})
+			})
+
 			Convey("And verifying a valid token", func() {
 				err := prdb.VerifyEmail(rec.ContactLeaderEmail, rec.ValidationToken)
 				Convey("Should complete without error", func() {
@@ -439,6 +491,31 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 				err := prdb.VerifyEmail("test@invalid", rec.ValidationToken)
 				Convey("Should complete with appropriate error (not revealing email error)", func() {
 					So(BadVerificationToken.Contains(err), ShouldEqual, true)
+				})
+			})
+		})
+
+		Convey("Inserting a group with pack name", func() {
+			rec := GroupPreRegistration{
+				GroupName:          "1st Testingway",
+				Council:            "Council rock",
+				ContactLeaderEmail: "testemail@example.com",
+			}
+			So(prdb.CreateRecord(&rec), ShouldBeNil)
+
+			Convey("Should still work with invoices", func() {
+				inv, err := prdb.CreateInvoiceIfNotExists(&rec)
+				So(err, ShouldBeNil)
+				Convey("With a matching set of invoice ids", func() {
+					So(inv.Id, ShouldEqual, rec.InvoiceId)
+				})
+				Convey("And the invoice should have", func() {
+					Convey("A valid to line", func() {
+						So(inv.To, ShouldEqual, "1st Testingway of Council rock")
+					})
+					Convey("With the single deposit item", func() {
+						So(inv.LineItems, ShouldResemble, []InvoiceItem{InvoiceItem{"Preregistration deposit", 25000, 1}})
+					})
 				})
 			})
 		})

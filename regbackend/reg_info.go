@@ -60,6 +60,8 @@ type GroupPreRegistration struct {
 
 	EstimatedYouth   int `json:"estimatedYouth"`
 	EstimatedLeaders int `json:"estimatedLeaders"`
+
+	InvoiceId uint64 `json:"invoiceId"`
 }
 
 func (gpr GroupPreRegistration) Key() []byte {
@@ -108,6 +110,7 @@ type PreRegDb interface {
 
 	NoteConfirmationEmailSent(rec *GroupPreRegistration) error
 	VerifyEmail(email, token string) error
+	CreateInvoiceIfNotExists(rec *GroupPreRegistration) (inv *Invoice, err error)
 }
 
 var (
@@ -126,12 +129,14 @@ var (
 )
 
 type preRegDbBolt struct {
-	db boltorm.DB
+	db    boltorm.DB
+	invDb InvoiceDb
 }
 
-func NewPreRegBoltDb(db boltorm.DB) (PreRegDb, error) {
+func NewPreRegBoltDb(db boltorm.DB, invDb InvoiceDb) (PreRegDb, error) {
 	prdb := &preRegDbBolt{
-		db: db,
+		db:    db,
+		invDb: invDb,
 	}
 	if err := prdb.init(); err != nil {
 		return nil, err
@@ -223,6 +228,41 @@ func (d *preRegDbBolt) VerifyEmail(email, token string) error {
 		rec.ValidatedOn = time.Now()
 		return tx.Update(BOLT_GROUPBUCKET, rec.Key(), rec)
 	})
+}
+
+func (d *preRegDbBolt) CreateInvoiceIfNotExists(gpr *GroupPreRegistration) (inv *Invoice, err error) {
+	err = d.db.Update(func(tx boltorm.Tx) error {
+		rec := &GroupPreRegistration{}
+		if err := tx.Get(BOLT_GROUPBUCKET, gpr.Key(), rec); err != nil {
+			return err
+		}
+
+		if rec.InvoiceId != 0 {
+			if inv, err = d.invDb.GetInvoice(rec.InvoiceId, tx); err != nil {
+				return err
+			}
+			gpr.InvoiceId = rec.InvoiceId
+			return nil
+		}
+
+		var toLine string
+		if rec.PackName == "" {
+			toLine = fmt.Sprintf("%s of %s", rec.GroupName, rec.Council)
+		} else {
+			toLine = fmt.Sprintf("%s of %s (%s)", rec.GroupName, rec.Council, rec.PackName)
+		}
+		inv = &Invoice{
+			To: toLine,
+			LineItems: []InvoiceItem{InvoiceItem{"Preregistration deposit", 25000, 1}},
+		}
+		if err := d.invDb.NewInvoice(inv, tx); err != nil {
+			return err
+		}
+		rec.InvoiceId = inv.Id
+		gpr.InvoiceId = inv.Id
+		return tx.Update(BOLT_GROUPBUCKET, rec.Key(), rec)
+	})
+	return inv, err
 }
 
 func (d *preRegDbBolt) init() error {
@@ -320,6 +360,32 @@ func (h *PreRegHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *PreRegHandler) GetInvoice(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	securityKey, ok := vars["SecurityKey"]
+	if !ok {
+		http.Error(w, "No key given", 404)
+		return
+	}
+	preReg, err := h.db.GetRecord(securityKey)
+	if err != nil {
+		http.Error(w, "Failed to get record", 500)
+	} else {
+		inv, err := h.db.CreateInvoiceIfNotExists(preReg)
+		if err != nil {
+			httpError(w, err)
+		}
+		buf := &bytes.Buffer{}
+		if err := json.NewEncoder(buf).Encode(inv); err != nil {
+			http.Error(w, "Failed to get record", 500)
+			return
+		}
+		w.Header()["Content-Type"] = []string{"application/json"}
+		w.WriteHeader(http.StatusOK)
+		io.Copy(w, buf)
+	}
+}
+
 func NewGroupPreRegistrationHandler(r *mux.Router, prdb PreRegDb, confirmationEmailService *ConfirmationEmailService) *PreRegHandler {
 	preRegHandler := &PreRegHandler{
 		db: prdb,
@@ -329,6 +395,7 @@ func NewGroupPreRegistrationHandler(r *mux.Router, prdb PreRegDb, confirmationEm
 	r.HandleFunc("/preregistration", preRegHandler.Create).Methods("POST")
 	r.HandleFunc("/confirmpreregistration", preRegHandler.VerifyEmail).Queries("email", "{email:.*@.*}").Methods("PUT")
 	preRegHandler.getHandler = r.HandleFunc("/preregistration/{SecurityKey:[a-zA-Z0-9-_]+}", preRegHandler.Get).Methods("GET")
+	r.HandleFunc("/preregistration/{SecurityKey:[a-zA-Z0-9-_]+}/invoice", preRegHandler.GetInvoice).Methods("GET")
 
 	return preRegHandler
 }
