@@ -62,6 +62,23 @@ func (t *memoryTx) Insert(bucket, key []byte, data interface{}) error {
 	return nil
 }
 
+func (t *memoryTx) Update(bucket, key []byte, data interface{}) error {
+	if !t.writable {
+		return ErrTxNotWritable.New("Could not insert record")
+	}
+	dataBytes, err := encodeData(data)
+	if err != nil {
+		return err
+	}
+
+	if (*t.buckets)[string(bucket)][string(key)] != nil {
+		(*t.buckets)[string(bucket)][string(key)] = append((*t.buckets)[string(bucket)][string(key)], dataBytes)
+	} else {
+		return ErrKeyDoesNotExist.New("Could not update record")
+	}
+	return nil
+}
+
 func (t *memoryTx) Get(bucket, key []byte, data interface{}) error {
 	dataBucket := (*t.buckets)[string(bucket)][string(key)]
 	if dataBucket == nil {

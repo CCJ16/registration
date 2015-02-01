@@ -19,6 +19,7 @@ type DB interface {
 type Tx interface {
 	CreateBucketIfNotExists(name []byte) error
 	Insert(bucket, key []byte, data interface{}) error
+	Update(bucket, key []byte, data interface{}) error
 
 	Get(bucket, key []byte, data interface{}) error
 }
