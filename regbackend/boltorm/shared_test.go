@@ -34,6 +34,48 @@ func sharedTests(db DB) func() {
 			So(db.Update(func(tx Tx) error {
 				return tx.CreateBucketIfNotExists(bucket2)
 			}), ShouldBeNil)
+			Convey("Next Sequence works (starting from 1)", func() {
+				var n uint64
+				So(db.Update(func(tx Tx) error {
+					var err error
+					n, err = tx.NextSequenceForBucket(bucket1)
+					return err
+				}), ShouldBeNil)
+				So(n, ShouldEqual, 1)
+				So(db.Update(func(tx Tx) error {
+					var err error
+					n, err = tx.NextSequenceForBucket(bucket1)
+					return err
+				}), ShouldBeNil)
+				So(n, ShouldEqual, 2)
+				So(db.Update(func(tx Tx) error {
+					var err error
+					n, err = tx.NextSequenceForBucket(bucket1)
+					return err
+				}), ShouldBeNil)
+				So(n, ShouldEqual, 3)
+				Convey("Which is separate from a different bucket", func() {
+					var n uint64
+					So(db.Update(func(tx Tx) error {
+						var err error
+						n, err = tx.NextSequenceForBucket(bucket2)
+						return err
+					}), ShouldBeNil)
+					So(n, ShouldEqual, 1)
+					So(db.Update(func(tx Tx) error {
+						var err error
+						n, err = tx.NextSequenceForBucket(bucket2)
+						return err
+					}), ShouldBeNil)
+					So(n, ShouldEqual, 2)
+					So(db.Update(func(tx Tx) error {
+						var err error
+						n, err = tx.NextSequenceForBucket(bucket2)
+						return err
+					}), ShouldBeNil)
+					So(n, ShouldEqual, 3)
+				})
+			})
 
 			Convey("Attempting to insert records in a read only transaction", func() {
 				data := testData{5}
@@ -72,7 +114,7 @@ func sharedTests(db DB) func() {
 						Convey("Should work without error", func() {
 							So(err, ShouldBeNil)
 							Convey("And have the original data", func() {
-								So(newData, ShouldResemble, data)
+								So(newData, ShouldResemble, testData{5})
 							})
 						})
 					})
@@ -128,7 +170,28 @@ func sharedTests(db DB) func() {
 								Convey("Should work without error", func() {
 									So(err, ShouldBeNil)
 									Convey("And have the new data", func() {
-										So(newData, ShouldResemble, data)
+										So(newData, ShouldResemble, testData{7})
+									})
+								})
+								Convey("When updating an existing record", func() {
+									data := testData{9}
+									err := db.Update(func(tx Tx) error {
+										return tx.Update(bucket1, []byte("KeyA"), &data)
+									})
+									Convey("It should succeed", func() {
+										So(err, ShouldBeNil)
+										Convey("And fetching that record", func() {
+											newData := testData{}
+											err := db.View(func(tx Tx) error {
+												return tx.Get(bucket1, []byte("KeyA"), &newData)
+											})
+											Convey("Should work without error", func() {
+												So(err, ShouldBeNil)
+												Convey("And have the new data", func() {
+													So(newData, ShouldResemble, testData{9})
+												})
+											})
+										})
 									})
 								})
 							})

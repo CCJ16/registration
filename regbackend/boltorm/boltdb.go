@@ -95,6 +95,13 @@ func (t *boltTx) Update(bucketName, key []byte, data interface{}) error {
 	return nil
 }
 
+func (t *boltTx) NextSequenceForBucket(bucket []byte) (uint64, error) {
+	b := t.tx.Bucket(bucket)
+	n, err := b.NextSequence()
+	b.Put([]byte("SEQ-BUG-FIX"), []byte{})
+	return n, err
+}
+
 func (t *boltTx) Get(bucketName, key []byte, data interface{}) error {
 	bucket := t.tx.Bucket(bucketName).Bucket(key)
 	if bucket == nil {

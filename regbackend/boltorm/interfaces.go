@@ -21,6 +21,7 @@ type Tx interface {
 	Insert(bucket, key []byte, data interface{}) error
 	Update(bucket, key []byte, data interface{}) error
 	AddIndex(indexBucket, index, key []byte) error
+	NextSequenceForBucket(bucket []byte) (uint64, error)
 
 	Get(bucket, key []byte, data interface{}) error
 	GetByIndex(indexBucket, dataBucket, index []byte, data interface{}) error
