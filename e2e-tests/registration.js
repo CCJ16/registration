@@ -63,6 +63,11 @@ describe("Registration information page", function() {
 			expect(countBlock.all(by.css("div.element")).get(0).element(by.tagName("p")).getText()).toBe("20");
 			expect(countBlock.all(by.css("div.element")).get(1).element(by.tagName("p")).getText()).toBe("12");
 		});
+		it("should have the invoice link", function() {
+			var elm = element.all(by.tagName("md-card-content")).get(-1).element(by.css("a"));
+			expect(elm.getText()).toBe("invoice")
+			expect(elm.getAttribute("href")).toMatch(/registration\/.*\/invoice/);
+		});
 	});
 
 	describe("with no pack information submitted", function() {
