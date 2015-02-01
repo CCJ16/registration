@@ -8,16 +8,16 @@ import (
 )
 
 type Invoice struct {
-	Id        uint64
-	To        string
-	LineItems []InvoiceItem
-	Created   time.Time
+	Id        uint64 `json:"id"`
+	To        string `json:"to"`
+	LineItems []InvoiceItem `json:"lineItems"`
+	Created   time.Time `json:"created"`
 }
 
 type InvoiceItem struct {
-	Description string
-	UnitPrice   int64
-	Count       int64
+	Description string `json:"description"`
+	UnitPrice   int64 `json:"unitPrice"`
+	Count       int64 `json:"count"`
 }
 
 type InvoiceDb interface {
