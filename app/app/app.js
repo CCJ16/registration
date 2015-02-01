@@ -4,6 +4,7 @@ angular.module("ccj16reg", [
 	"ngMaterial",
 	"ccj16reg.registration",
 	"ccj16reg.view.admin",
+	"ccj16reg.view.invoice",
 	"ccj16reg.view.login",
 	"ccj16reg.view.recordlist",
 	"ccj16reg.view.register",

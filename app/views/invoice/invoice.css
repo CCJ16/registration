@@ -1,0 +1,37 @@
+.Invoice .header {
+	padding-bottom: 24px;
+}
+.Invoice .right p, .Invoice .right h4 {
+	text-align: right;
+}
+.Invoice .left p, .Invoice .left h4 {
+	text-align: left;
+}
+
+.Invoice table {
+	width: 100%;
+}
+.Invoice thead tr {
+	border-bottom: solid 1px;
+}
+.Invoice td {
+	padding: 4px;
+}
+.Invoice td:first-child {
+	width: 99%;
+}
+.Invoice tr.total td:first-child {
+	border-top: none;
+}
+.Invoice tr.total td {
+	border-top: solid 1px red;
+}
+@media print {
+	.Invoice tr.total td {
+		border-top-color: black;
+	}
+}
+.Invoice td.numeric {
+	text-align: right;
+	font-family: 'Droid Sans Mono', monospace;
+}

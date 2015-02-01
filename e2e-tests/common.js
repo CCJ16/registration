@@ -2,6 +2,8 @@
 
 var request = require("request");
 
+browser.get("/");
+
 beforeEach(function () {
 	var flow = protractor.promise.controlFlow();
 	flow.execute(function() {

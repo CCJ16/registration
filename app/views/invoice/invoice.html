@@ -1,0 +1,42 @@
+<div layout="row" layout-align="center">
+	<md-card flex-gt-lg="66" flex="90" class="Invoice">
+		<md-card-content>
+			<md-toolbar><h2 class="md-toolbar-tools"><span>Invoice for {{::invoice.to}}</span></h2></md-toolbar>
+			<div style="margin: 0px 0px">
+			<div layout="row" class="element-container header">
+				<div class="element left" flex="65">
+					<h4>Date</h4>
+					<p>{{::invoice.created | date:"MMMM d, yyyy" }}</p>
+				</div>
+				<div class="element right" flex="35">
+					<h4>Number</h4>
+					<p>{{::invoice.id}}</p>
+				</div>
+			</div>
+			<table>
+				<thead>
+					<tr>
+						<th>Description</th>
+						<th>Qty</th>
+						<th>Price</th>
+						<th>Total</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="item in invoice.lineItems">
+						<td>{{::item.description}}</td>
+						<td class="numeric">{{::item.count}}</td>
+						<td class="numeric">{{::item.unitPrice|centToDollars}}</td>
+						<td class="numeric">{{::item.count*item.unitPrice|centToDollars}}</td>
+					</tr>
+					<tr class="total">
+						<td></td>
+						<td colspan="2">Total</td>
+						<td class="numeric">{{::invoice.lineItems | invoiceSum | centToDollars}}</td>
+					</tr>
+				</tbody>
+			</table>
+			</div>
+		</md-card-content>
+	</md-card>
+</div>
