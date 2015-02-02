@@ -98,7 +98,6 @@ func (t *boltTx) Update(bucketName, key []byte, data interface{}) error {
 func (t *boltTx) NextSequenceForBucket(bucket []byte) (uint64, error) {
 	b := t.tx.Bucket(bucket)
 	n, err := b.NextSequence()
-	b.Put([]byte("SEQ-BUG-FIX"), []byte{})
 	return n, err
 }
 
