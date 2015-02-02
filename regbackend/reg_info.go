@@ -165,7 +165,6 @@ func (d *preRegDbBolt) CreateRecord(in *GroupPreRegistration) error {
 				return err
 			}
 		}
-		log.Print(in.ValidatedOn)
 		return nil
 	})
 	if boltorm.ErrKeyAlreadyExists.Contains(err) {
