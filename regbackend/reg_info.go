@@ -251,7 +251,7 @@ func (d *preRegDbBolt) CreateInvoiceIfNotExists(gpr *GroupPreRegistration) (inv 
 			toLine = fmt.Sprintf("%s of %s (%s)", rec.GroupName, rec.Council, rec.PackName)
 		}
 		inv = &Invoice{
-			To: toLine,
+			To:        toLine,
 			LineItems: []InvoiceItem{InvoiceItem{"Preregistration deposit", 25000, 1}},
 		}
 		if err := d.invDb.NewInvoice(inv, tx); err != nil {

@@ -161,7 +161,7 @@ func TestPreRegCreateRequest(t *testing.T) {
 					})
 				})
 				Convey("And requesting an invoice should be error free", func() {
-					r, err := http.NewRequest("GET", "http://localhost:8080" + w.HeaderMap["Location"][0] + "/invoice", nil)
+					r, err := http.NewRequest("GET", "http://localhost:8080"+w.HeaderMap["Location"][0]+"/invoice", nil)
 					if err != nil {
 						t.Fatal(err)
 					}
