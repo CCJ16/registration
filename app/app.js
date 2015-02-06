@@ -29,7 +29,6 @@ angular.module('ccj16reg', [
 			'default': '100',
 		});
 })
-
 .controller('CtrlApp', function($scope) {
 	$scope.packDisplayName = '';
 	$scope.$on('CurrentGroupInformationChanged', function(event, registration) {
@@ -41,4 +40,26 @@ angular.module('ccj16reg', [
 	$scope.$on('$locationChangeSuccess', function() {
 		$scope.packDisplayName = '';
 	});
+})
+.factory('xsrfFailureFixer',function($q, $injector) {
+	var attempts = 5;
+	return {
+		'responseError': function(response) {
+			if (response.status === 400 && response.data == "Invalid XSRF token\n" && attempts > 0) {
+				attempts--;
+				var $http = $injector.get('$http');
+				return $http(response.config);
+			}
+			return $q.reject(response);
+		},
+		'response': function(response) {
+			if (response.status === 200 && /^\/api/.test(response.config.url)) {
+				attempts = 5;
+			}
+			return response;
+		},
+	};
+})
+.config(function($httpProvider) {
+	$httpProvider.interceptors.push('xsrfFailureFixer');
 });

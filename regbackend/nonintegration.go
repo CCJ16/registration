@@ -16,6 +16,9 @@ func main() {
 	if generalConfig.Integration == true {
 		log.Panic("Attempted to run in integration mode in a non-final binary!")
 	}
+	if generalConfig.Develop != develop {
+		log.Panic("Mismatch in development vs production build and configuration!")
+	}
 	db, err := bolt.Open(generalConfig.Database, 0600, &bolt.Options{Timeout: 1})
 	if err != nil {
 		log.Fatalf("Failed to open bolt database, err: %s", err)

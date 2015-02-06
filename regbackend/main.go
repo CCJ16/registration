@@ -2,7 +2,9 @@ package main
 
 import (
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/base64"
+	"encoding/gob"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,7 +22,12 @@ import (
 )
 
 var (
-	SetupErrors = errors.NewClass("Error during setup")
+	SetupErrors   = errors.NewClass("Error during setup")
+	SecurityError = errors.NewClass("Security setup failed")
+)
+
+const (
+	globalSessionName = "SESSION"
 )
 
 var httpConfig struct {
@@ -125,6 +132,79 @@ func httpError(w http.ResponseWriter, err error) {
 	http.Error(w, errhttp.GetErrorBody(err), errhttp.GetStatusCode(err, 500))
 }
 
+type xsrfTokenCreator struct {
+	Handler http.Handler
+	store   sessions.Store
+}
+
+type xsrfSessionTokenType int
+
+const xsrfSessionToken xsrfSessionTokenType = 0
+
+func init() {
+	gob.Register(xsrfSessionToken)
+}
+
+func (h *xsrfTokenCreator) setXsrfToken(w http.ResponseWriter, r *http.Request) error {
+	var random [33]byte
+	if _, err := rand.Read(random[:]); err != nil {
+		return SecurityError.New("Failed to generate XSRF prevention token")
+	}
+	key := base64.URLEncoding.EncodeToString(random[:])
+	const maxAge = 60 * 60 * 24 * 30
+	expires := time.Now().Add(maxAge * time.Second)
+	cookie := &http.Cookie{
+		Name:     "XSRF-TOKEN",
+		Value:    key,
+		HttpOnly: false,
+		Path:     "/",
+		Secure:   !(generalConfig.Integration || generalConfig.Develop),
+		Expires:  expires,
+		MaxAge:   maxAge,
+	}
+	http.SetCookie(w, cookie)
+
+	sess, err := sessions.GetRegistry(r).Get(h.store, globalSessionName)
+	if err != nil && sess == nil {
+		log.Print("Failed to setup session, error: ", err)
+		return SecurityError.New("Failed to setup session")
+	}
+	sess.Values[xsrfSessionToken] = key
+
+	return nil
+}
+
+func (h *xsrfTokenCreator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if err := h.setXsrfToken(w, r); err != nil {
+		httpError(w, err)
+	} else {
+		h.Handler.ServeHTTP(w, r)
+	}
+}
+
+type xsrfVerifierHandler struct {
+	creator *xsrfTokenCreator
+	Handler http.Handler
+}
+
+func (h *xsrfVerifierHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var tokenHeader, tokenSession string
+	// Empty tokenHeaders are considered invalid.  So unless this matches my expectations, I can ignore it.
+	tokenHeader = r.Header.Get("X-Xsrf-Token")
+	// If err != nil or the conversion fails, tokenSession is empty and can't match a non-empty tokenHeader and is thus safe to ignore.
+	if session, err := h.creator.store.Get(r, globalSessionName); err == nil {
+		tokenSession, _ = session.Values[xsrfSessionToken].(string)
+	}
+	if err := h.creator.setXsrfToken(w, r); err != nil {
+		log.Print("Failed to create new token when verifying, error swallowed (%s)!", err)
+	}
+	if len(tokenHeader) != 0 && subtle.ConstantTimeCompare([]byte(tokenSession), []byte(tokenHeader)) == 1 {
+		h.Handler.ServeHTTP(w, r)
+	} else {
+		http.Error(w, "Invalid XSRF token", http.StatusBadRequest)
+	}
+}
+
 type httpRouter interface {
 	Handle(string, http.Handler)
 	HandleFunc(string, func(http.ResponseWriter, *http.Request))
@@ -156,7 +236,6 @@ func setupStandardHandlers(globalRouter httpRouter, db *bolt.DB) (http.Handler, 
 			BucketName: []byte("SESSIONS_BUCKET"),
 		},
 	}, []byte(key))
-	_ = boltStore
 	if err != nil {
 		return nil, nil, nil, SetupErrors.New("Failed to setup session data")
 	}
@@ -177,7 +256,7 @@ func setupStandardHandlers(globalRouter httpRouter, db *bolt.DB) (http.Handler, 
 
 	apiR.Handle("/grabdb", &grabDb{db}).Headers("X-My-Auth-Token", key).Methods("GET").Queries("key", key)
 
-	globalRouter.Handle("/api/", r)
+	globalRouter.Handle("/api/", &xsrfVerifierHandler{&xsrfTokenCreator{nil, boltStore}, apiR})
 	otherFiles := http.FileServer(http.Dir(generalConfig.StaticFilesLocation))
 	globalRouter.Handle("/app.css", otherFiles)
 	globalRouter.Handle("/app.js", otherFiles)
@@ -185,9 +264,9 @@ func setupStandardHandlers(globalRouter httpRouter, db *bolt.DB) (http.Handler, 
 	globalRouter.Handle("/views/", otherFiles)
 	globalRouter.Handle("/bower_components/", otherFiles)
 	indexLocation := generalConfig.StaticFilesLocation + "/index.html"
-	globalRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	globalRouter.Handle("/", &xsrfTokenCreator{http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, indexLocation)
-	})
+	}), boltStore})
 	quitC, doneC := reaper.Run(db, reaper.Options{BucketName: []byte("SESSIONS_BUCKET")})
 	return &sessionSaver{globalRouter}, quitC, doneC, nil
 }
