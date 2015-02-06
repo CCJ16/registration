@@ -21,6 +21,9 @@ func main() {
 		log.Fatalf("Failed to open bolt database, err: %s", err)
 	}
 	mux := http.NewServeMux()
-	setupStandardHandlers(mux, db)
-	panic(http.ListenAndServe(httpConfig.Listen, handlers.CompressHandler(&requestLogger{mux})))
+	realMux, _, _, err := setupStandardHandlers(mux, db)
+	if err != nil {
+		log.Fatalf("Failed to setup basic routing, err: %s", err)
+	}
+	panic(http.ListenAndServe(httpConfig.Listen, handlers.CompressHandler(&requestLogger{realMux})))
 }

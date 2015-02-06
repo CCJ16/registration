@@ -16,12 +16,20 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/handlers"
 	"github.com/spacemonkeygo/flagfile"
+	"github.com/yosssi/boltstore/reaper"
 )
 
 var handlerForCookie = make(map[string]http.Handler)
 var currentHandlerId int
 var handlerForCookieLock sync.Mutex
-var dbs []*bolt.DB
+
+type cleanupInfo struct {
+	db    *bolt.DB
+	quitC chan<- struct{}
+	doneC <-chan struct{}
+}
+
+var dbs []*cleanupInfo
 var dbsLock sync.Mutex
 var wg sync.WaitGroup
 
@@ -69,7 +77,9 @@ func main() {
 	wg.Wait()
 	dbsLock.Lock()
 	defer dbsLock.Unlock()
-	for _, db := range dbs {
+	for _, dbStruct := range dbs {
+		reaper.Quit(dbStruct.quitC, dbStruct.doneC)
+		db := dbStruct.db
 		path := db.Path()
 		db.Close()
 		err := os.Remove(path)
@@ -181,11 +191,17 @@ func setupNewHandlers() http.Handler {
 		log.Fatalf("Failed to open bolt database, err: %s", err)
 	}
 	dbsLock.Lock()
-	dbs = append(dbs, db)
-	dbsLock.Unlock()
+	defer dbsLock.Unlock()
+	tbc := cleanupInfo{db: db}
+	dbs = append(dbs, &tbc)
 	mux := http.NewServeMux()
-	setupStandardHandlers(mux, db)
 	mux.Handle("/integration/wipe_database", &dbWiper{db})
 	mux.HandleFunc("/integration/", http.NotFound)
-	return mux
+	newHandler, quitC, doneC, err := setupStandardHandlers(mux, db)
+	if err != nil {
+		log.Fatalf("Failed to setup new standard handlers: %s", err)
+	}
+	tbc.quitC = quitC
+	tbc.doneC = doneC
+	return newHandler
 }
