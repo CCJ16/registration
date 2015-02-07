@@ -48,16 +48,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to open tcp port, err %s", err)
 	}
-	go func(c <-chan os.Signal) {
-		<-c
-		l.Close()
-	}(c)
 	server := http.Server{
 		Handler:      handlers.CompressHandler(&requestLogger{mux}),
 		ReadTimeout:  time.Second * 60,
 		WriteTimeout: time.Second * 60,
 		ConnState:    ConnectionAccounting,
 	}
+	go func(c <-chan os.Signal) {
+		<-c
+		server.SetKeepAlivesEnabled(false)
+		l.Close()
+	}(c)
 	if err := server.Serve(l); err != nil {
 		if oe, ok := err.(*net.OpError); ok && oe.Op == "accept" && oe.Net == "tcp" && oe.Err.Error() == "use of closed network connection" {
 			log.Print("Port nicely closed")
@@ -79,11 +80,25 @@ func main() {
 	log.Print("Cleanly done")
 }
 
-func ConnectionAccounting(_ net.Conn, state http.ConnState) {
+var conTrackIdle map[net.Conn]bool = make(map[net.Conn]bool)
+var cTIM sync.Mutex
+
+func ConnectionAccounting(c net.Conn, state http.ConnState) {
+	cTIM.Lock()
+	defer cTIM.Unlock()
 	switch state {
 	case http.StateNew:
+		conTrackIdle[c] = true
+	case http.StateActive:
 		wg.Add(1)
+		delete(conTrackIdle, c)
 	case http.StateClosed:
+		if !conTrackIdle[c] {
+			wg.Done()
+		}
+		delete(conTrackIdle, c)
+	case http.StateIdle:
+		conTrackIdle[c] = true
 		wg.Done()
 	}
 }
@@ -112,6 +127,14 @@ func muxTest(w http.ResponseWriter, r *http.Request) {
 		handler, ok = handlerForCookie[cookieValue]
 		handlerForCookieLock.Unlock()
 		if !ok {
+			http.SetCookie(w, &http.Cookie{
+				Name:    "ClientID",
+				MaxAge:  -1,
+				Expires: time.Time{},
+				Path:    "/",
+			})
+			w.Header().Set("Location", r.URL.Path)
+			w.WriteHeader(http.StatusSeeOther)
 			w.Write([]byte("Invalid cookie value!"))
 			log.Print("Invalid cookie value!")
 			return
