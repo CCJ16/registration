@@ -5,6 +5,7 @@ angular.module('ccj16reg', [
 	'ngRoute',
 	'ngMaterial',
 	'ccj16reg.registration',
+	'ccj16reg.view.login',
 	'ccj16reg.view.register',
 	'ccj16reg.view.registration',
 	'ccj16reg.view.emailConfirmation',
