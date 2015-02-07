@@ -62,9 +62,16 @@ func (s stringSliceConfig) String() string {
 	return fmt.Sprintf("\"%s\"", strings.Join(s, ","))
 }
 
+var authConfig struct {
+	ClientID      string            `default:"" usage:"Client id for use with Google OAuth"`
+	ClientSecret  string            `default:"" usage:"Client secret for use with Google OAuth"`
+	AllowedEmails stringSliceConfig `usage:"Allowed email addresses, comma separated."`
+}
+
 func init() {
 	goflagutils.Setup("http", &httpConfig)
 	goflagutils.Setup("email", &emailConfig)
+	goflagutils.Setup("auth", &authConfig)
 	goflagutils.Setup("", &generalConfig)
 }
 
@@ -265,6 +272,7 @@ func setupStandardHandlers(globalRouter httpRouter, db *bolt.DB) (http.Handler, 
 	ces := NewConfirmationEmailService(generalConfig.Domain, emailConfig.FromAddress, emailConfig.FromName, emailConfig.ContactEmail, NewLocalMailder(emailConfig.Server), gprdb)
 
 	NewGroupPreRegistrationHandler(apiR, gprdb, ces)
+	NewAuthenticationHandler(apiR, boltStore)
 
 	apiR.Handle("/grabdb", &grabDb{db}).Headers("X-My-Auth-Token", key).Methods("GET").Queries("key", key)
 
