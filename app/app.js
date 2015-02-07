@@ -5,6 +5,7 @@ angular.module('ccj16reg', [
 	'ngRoute',
 	'ngMaterial',
 	'ccj16reg.registration',
+	'ccj16reg.view.admin',
 	'ccj16reg.view.login',
 	'ccj16reg.view.register',
 	'ccj16reg.view.registration',
@@ -64,3 +65,16 @@ angular.module('ccj16reg', [
 .config(function($httpProvider) {
 	$httpProvider.interceptors.push('xsrfFailureFixer');
 });
+
+function loginRequired($location, $q, authentication) {
+	return $q(function(resolve, reject) {
+		authentication.isLoggedIn().then(function(res) {
+			if (res) {
+				resolve();
+			} else {
+				reject();
+				$location.path('/login');
+			}
+		});
+	});
+}
