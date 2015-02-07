@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/CCJ16/registration/regbackend/boltorm"
@@ -48,6 +49,17 @@ var generalConfig struct {
 	StaticFilesLocation string `default:"../app" usage:"Location of static files for the site"`
 	Integration         bool   `default:"false" usage:"Set when running an integration binary for testing."`
 	Develop             bool   `default:"false" usage:"Set when running a binary for development."`
+}
+
+type stringSliceConfig []string
+
+func (s *stringSliceConfig) Set(value string) error {
+	*s = strings.Split(value, ",")
+	return nil
+}
+
+func (s stringSliceConfig) String() string {
+	return fmt.Sprintf("\"%s\"", strings.Join(s, ","))
 }
 
 func init() {
