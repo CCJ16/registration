@@ -1,0 +1,12 @@
+table.recordlist {
+	width: 100%;
+	margin-top: 1em;
+}
+
+table.recordlist tr:first-child {
+	border-bottom: solid 1px;
+}
+
+table.recordlist tr:nth-child(odd) td {
+	background-color: #FFEBEE;
+}

@@ -7,6 +7,7 @@ angular.module('ccj16reg', [
 	'ccj16reg.registration',
 	'ccj16reg.view.admin',
 	'ccj16reg.view.login',
+	'ccj16reg.view.recordlist',
 	'ccj16reg.view.register',
 	'ccj16reg.view.registration',
 	'ccj16reg.view.emailConfirmation',
