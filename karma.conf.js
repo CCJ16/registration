@@ -19,12 +19,18 @@ module.exports = function(config){
 			'karma-chrome-launcher',
 			'karma-firefox-launcher',
 			'karma-jasmine',
+			'karma-notify-send-reporter',
 			'karma-junit-reporter'
 		],
 
 		junitReporter : {
 			outputFile: 'test_out/unit.xml',
 			suite: 'unit'
-		}
+		},
+
+		reporters : [
+			'notify-send',
+			'progress'
+		]
 	});
 };
