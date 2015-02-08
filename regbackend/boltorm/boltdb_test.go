@@ -11,7 +11,7 @@ import (
 )
 
 func TestBoltDb(t *testing.T) {
-	Convey("With a memory DB", t, func() {
+	Convey("With a bolt DB", t, func() {
 		file, err := ioutil.TempFile("", "")
 		So(err, ShouldBeNil)
 		Reset(func() {
