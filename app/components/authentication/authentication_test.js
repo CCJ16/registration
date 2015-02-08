@@ -18,16 +18,29 @@ describe('ccj16reg.authentication module', function() {
 			$httpBackend.verifyNoOutstandingExpectation();
 			$httpBackend.verifyNoOutstandingRequest();
 		});
-		it('should return unauthenticated when nothing done', function() {
+		it('should return unauthenticated when session is blank', function() {
+			$httpBackend.expectGET('/api/authentication/isLoggedIn').respond(200, 'false')
 			var gspy = jasmine.createSpy('gspy');
 			var bspy = jasmine.createSpy('bspy');
 
 			authentication.isLoggedIn().then(gspy, bspy);
-			$rootScope.$digest();
+			$httpBackend.flush();
 			expect(gspy).toHaveBeenCalled();
 			expect(bspy).not.toHaveBeenCalled();
 
 			expect(gspy).toHaveBeenCalledWith(false);
+		});
+		it('should return authenticated when session reports success', function() {
+			$httpBackend.expectGET('/api/authentication/isLoggedIn').respond(200, 'true')
+			var gspy = jasmine.createSpy('gspy');
+			var bspy = jasmine.createSpy('bspy');
+
+			authentication.isLoggedIn().then(gspy, bspy);
+			$httpBackend.flush();
+			expect(gspy).toHaveBeenCalled();
+			expect(bspy).not.toHaveBeenCalled();
+
+			expect(gspy).toHaveBeenCalledWith(true);
 		});
 		it('should send a valid request to the backend and succeed.', function() {
 			$httpBackend.expectPOST('/api/authentication/googletoken', 'goodToken').respond(200, 'true')

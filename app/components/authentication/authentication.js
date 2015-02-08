@@ -2,11 +2,22 @@
 
 angular.module('ccj16reg.authentication', [])
 .factory('authentication', function($http, $q) {
-	var loggedInP = $q(function(resolve) {
-		resolve(false);
-	});
+	var loggedInP = null;
 	return {
 		isLoggedIn: function() {
+			if (loggedInP == null) {
+				loggedInP = $q(function(resolve, reject) {
+					$http.get('/api/authentication/isLoggedIn').then(function(response) {
+						if (response.data === 'true') {
+							resolve(true);
+						} else {
+							resolve(false);
+						}
+					}, function(response) {
+						reject(response);
+					});
+				});
+			}
 			return loggedInP;
 		},
 		tryGoogleToken: function(token) {
