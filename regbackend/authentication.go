@@ -89,6 +89,18 @@ func (a *AuthenticationHandler) VerifyGoogleToken(w http.ResponseWriter, r *http
 	}
 }
 
+func (a *AuthenticationHandler) AdminFunc(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		sess, err := sessions.GetRegistry(r).Get(a.store, globalSessionName)
+		if sess == nil || sess.Values[authStatusLoggedIn] == nil || !sess.Values[authStatusLoggedIn].(bool) {
+			log.Print("Failed to get session, err %s", err)
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		} else {
+			h(w, r)
+		}
+	}
+}
+
 func NewAuthenticationHandler(r *mux.Router, store sessions.Store) *AuthenticationHandler {
 	authHandler := &AuthenticationHandler{
 		store: store,
