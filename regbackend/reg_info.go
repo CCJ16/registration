@@ -107,6 +107,7 @@ func (gpr *GroupPreRegistration) PrepareForInsert() error {
 type PreRegDb interface {
 	CreateRecord(rec *GroupPreRegistration) error
 	GetRecord(securityKey string) (rec *GroupPreRegistration, err error)
+	GetAll() (recs []*GroupPreRegistration, err error)
 
 	NoteConfirmationEmailSent(rec *GroupPreRegistration) error
 	VerifyEmail(email, token string) error
@@ -187,6 +188,17 @@ func (d *preRegDbBolt) GetRecord(securityKey string) (rec *GroupPreRegistration,
 			}
 		}
 		rec = res
+		return nil
+	})
+}
+
+func (d *preRegDbBolt) GetAll() (recs []*GroupPreRegistration, err error) {
+	return recs, d.db.View(func(tx boltorm.Tx) error {
+		if res, err := tx.GetAll(BOLT_GROUPBUCKET, &GroupPreRegistration{}); err != nil {
+			return err
+		} else {
+			recs = res.([]*GroupPreRegistration)
+		}
 		return nil
 	})
 }
@@ -342,6 +354,22 @@ func (h *PreRegHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *PreRegHandler) GetList(w http.ResponseWriter, r *http.Request) {
+	recs, err := h.db.GetAll()
+	if err != nil {
+		http.Error(w, "Failed to get records", 500)
+	} else {
+		buf := &bytes.Buffer{}
+		if err := json.NewEncoder(buf).Encode(recs); err != nil {
+			http.Error(w, "Failed to get records", 500)
+			return
+		}
+		w.Header()["Content-Type"] = []string{"application/json"}
+		w.WriteHeader(http.StatusOK)
+		io.Copy(w, buf)
+	}
+}
+
 func (h *PreRegHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	email, ok := vars["email"]
@@ -385,7 +413,7 @@ func (h *PreRegHandler) GetInvoice(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func NewGroupPreRegistrationHandler(r *mux.Router, prdb PreRegDb, confirmationEmailService *ConfirmationEmailService) *PreRegHandler {
+func NewGroupPreRegistrationHandler(r *mux.Router, prdb PreRegDb, authHandler *AuthenticationHandler, confirmationEmailService *ConfirmationEmailService) *PreRegHandler {
 	preRegHandler := &PreRegHandler{
 		db: prdb,
 		confirmationEmailService: confirmationEmailService,
@@ -394,6 +422,7 @@ func NewGroupPreRegistrationHandler(r *mux.Router, prdb PreRegDb, confirmationEm
 	r.HandleFunc("/preregistration", preRegHandler.Create).Methods("POST")
 	r.HandleFunc("/confirmpreregistration", preRegHandler.VerifyEmail).Queries("email", "{email:.*@.*}").Methods("PUT")
 	preRegHandler.getHandler = r.HandleFunc("/preregistration/{SecurityKey:[a-zA-Z0-9-_]+}", preRegHandler.Get).Methods("GET")
+	r.HandleFunc("/preregistration", authHandler.AdminFunc(preRegHandler.GetList)).Methods("Get")
 	r.HandleFunc("/preregistration/{SecurityKey:[a-zA-Z0-9-_]+}/invoice", preRegHandler.GetInvoice).Methods("GET")
 
 	return preRegHandler

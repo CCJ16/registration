@@ -271,8 +271,8 @@ func setupStandardHandlers(globalRouter httpRouter, db *bolt.DB) (http.Handler, 
 
 	ces := NewConfirmationEmailService(generalConfig.Domain, emailConfig.FromAddress, emailConfig.FromName, emailConfig.ContactEmail, NewLocalMailder(emailConfig.Server), gprdb)
 
-	NewGroupPreRegistrationHandler(apiR, gprdb, ces)
-	NewAuthenticationHandler(apiR, boltStore)
+	authHandler := NewAuthenticationHandler(apiR, boltStore)
+	NewGroupPreRegistrationHandler(apiR, gprdb, authHandler, ces)
 
 	apiR.Handle("/grabdb", &grabDb{db}).Headers("X-My-Auth-Token", key).Methods("GET").Queries("key", key)
 
