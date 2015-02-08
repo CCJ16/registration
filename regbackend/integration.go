@@ -20,7 +20,7 @@ import (
 )
 
 var handlerForCookie = make(map[string]http.Handler)
-var currentHandlerId int
+var currentHandlerID int
 var handlerForCookieLock sync.Mutex
 
 type cleanupInfo struct {
@@ -118,8 +118,8 @@ func muxTest(w http.ResponseWriter, r *http.Request) {
 	if cookie, err := r.Cookie("ClientID"); err != nil {
 		handler = setupNewHandlers()
 		handlerForCookieLock.Lock()
-		newValue := currentHandlerId
-		currentHandlerId++
+		newValue := currentHandlerID
+		currentHandlerID++
 		cookieValue := strconv.Itoa(newValue)
 		handlerForCookie[cookieValue] = handler
 		handlerForCookieLock.Unlock()

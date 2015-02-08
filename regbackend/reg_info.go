@@ -61,7 +61,7 @@ type GroupPreRegistration struct {
 	EstimatedYouth   int `json:"estimatedYouth"`
 	EstimatedLeaders int `json:"estimatedLeaders"`
 
-	InvoiceId uint64 `json:"invoiceId"`
+	InvoiceID uint64 `json:"invoiceId"`
 }
 
 func (gpr GroupPreRegistration) Key() []byte {
@@ -248,11 +248,11 @@ func (d *preRegDbBolt) CreateInvoiceIfNotExists(gpr *GroupPreRegistration) (inv 
 			return err
 		}
 
-		if rec.InvoiceId != 0 {
-			if inv, err = d.invDb.GetInvoice(rec.InvoiceId, tx); err != nil {
+		if rec.InvoiceID != 0 {
+			if inv, err = d.invDb.GetInvoice(rec.InvoiceID, tx); err != nil {
 				return err
 			}
-			gpr.InvoiceId = rec.InvoiceId
+			gpr.InvoiceID = rec.InvoiceID
 			return nil
 		}
 
@@ -269,8 +269,8 @@ func (d *preRegDbBolt) CreateInvoiceIfNotExists(gpr *GroupPreRegistration) (inv 
 		if err := d.invDb.NewInvoice(inv, tx); err != nil {
 			return err
 		}
-		rec.InvoiceId = inv.Id
-		gpr.InvoiceId = inv.Id
+		rec.InvoiceID = inv.ID
+		gpr.InvoiceID = inv.ID
 		return tx.Update(BOLT_GROUPBUCKET, rec.Key(), rec)
 	})
 	return inv, err

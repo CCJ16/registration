@@ -413,7 +413,7 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 				inv, err := prdb.CreateInvoiceIfNotExists(&rec)
 				So(err, ShouldBeNil)
 				Convey("With a matching set of invoice ids", func() {
-					So(inv.Id, ShouldEqual, rec.InvoiceId)
+					So(inv.ID, ShouldEqual, rec.InvoiceID)
 				})
 				Convey("And the invoice should have", func() {
 					Convey("A valid to line", func() {
@@ -507,7 +507,7 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 				inv, err := prdb.CreateInvoiceIfNotExists(&rec)
 				So(err, ShouldBeNil)
 				Convey("With a matching set of invoice ids", func() {
-					So(inv.Id, ShouldEqual, rec.InvoiceId)
+					So(inv.ID, ShouldEqual, rec.InvoiceID)
 				})
 				Convey("And the invoice should have", func() {
 					Convey("A valid to line", func() {

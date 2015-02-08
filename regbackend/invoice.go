@@ -8,7 +8,7 @@ import (
 )
 
 type Invoice struct {
-	Id        uint64        `json:"id"`
+	ID        uint64        `json:"id"`
 	To        string        `json:"to"`
 	LineItems []InvoiceItem `json:"lineItems"`
 	Created   time.Time     `json:"created"`
@@ -22,7 +22,7 @@ type InvoiceItem struct {
 
 type InvoiceDb interface {
 	NewInvoice(in *Invoice, tx boltorm.Tx) error
-	GetInvoice(invoiceId uint64, tx boltorm.Tx) (*Invoice, error)
+	GetInvoice(invoiceID uint64, tx boltorm.Tx) (*Invoice, error)
 }
 
 type invoiceDb struct {
@@ -42,24 +42,24 @@ func NewInvoiceDb(db boltorm.DB) (InvoiceDb, error) {
 }
 
 func (i *invoiceDb) NewInvoice(in *Invoice, tx boltorm.Tx) error {
-	in.Id = 0
-	for in.Id == 0 {
+	in.ID = 0
+	for in.ID == 0 {
 		id, err := tx.NextSequenceForBucket(BOLT_INVOICEBUCKET)
 		if err != nil {
 			return err
 		}
-		in.Id = id
+		in.ID = id
 	}
 	in.Created = time.Now()
 	var idBytes [8]byte
-	binary.BigEndian.PutUint64(idBytes[:], in.Id)
+	binary.BigEndian.PutUint64(idBytes[:], in.ID)
 	return tx.Insert(BOLT_INVOICEBUCKET, idBytes[:], in)
 }
 
-func (i *invoiceDb) GetInvoice(invoiceId uint64, tx boltorm.Tx) (inv *Invoice, err error) {
+func (i *invoiceDb) GetInvoice(invoiceID uint64, tx boltorm.Tx) (inv *Invoice, err error) {
 	inv = &Invoice{}
 	var key [8]byte
-	binary.BigEndian.PutUint64(key[:], invoiceId)
+	binary.BigEndian.PutUint64(key[:], invoiceID)
 	if err = tx.Get(BOLT_INVOICEBUCKET, key[:], inv); err != nil {
 		if boltorm.ErrKeyDoesNotExist.Contains(err) {
 			return nil, RecordDoesNotExist.New("Could not find invoice")

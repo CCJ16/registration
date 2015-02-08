@@ -39,7 +39,7 @@ func TestInvoiceStorage(t *testing.T) {
 				var dbInv *Invoice
 				err := db.View(func(tx boltorm.Tx) error {
 					var err error
-					dbInv, err = invDb.GetInvoice(invoice.Id, tx)
+					dbInv, err = invDb.GetInvoice(invoice.ID, tx)
 					return err
 				})
 				So(err, ShouldBeNil)
