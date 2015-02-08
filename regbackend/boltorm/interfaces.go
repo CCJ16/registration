@@ -24,5 +24,6 @@ type Tx interface {
 	NextSequenceForBucket(bucket []byte) (uint64, error)
 
 	Get(bucket, key []byte, data interface{}) error
+	GetAll(bucket []byte, dataType interface{}) (interface{}, error)
 	GetByIndex(indexBucket, dataBucket, index []byte, data interface{}) error
 }

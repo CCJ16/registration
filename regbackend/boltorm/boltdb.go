@@ -113,6 +113,24 @@ func (t *boltTx) Get(bucketName, key []byte, data interface{}) error {
 	return decodeData(buf, data)
 }
 
+func (t *boltTx) GetAll(bucketName []byte, dataType interface{}) (interface{}, error) {
+	ret := makeSliceFor(dataType)
+	bucket := t.tx.Bucket(bucketName)
+	err := bucket.ForEach(func(key, _ []byte) error {
+		_, bytes := bucket.Bucket(key).Cursor().Last()
+		nextElement := makeNew(dataType)
+		if err := decodeData(bytes, nextElement); err != nil {
+			return err
+		}
+		ret = appendToSlice(ret, nextElement)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
 func (t *boltTx) GetByIndex(indexBucket, dataBucket, index []byte, data interface{}) error {
 	return t.Get(dataBucket, t.tx.Bucket(indexBucket).Get(index), data)
 }

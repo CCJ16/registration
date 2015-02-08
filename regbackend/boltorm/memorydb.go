@@ -1,6 +1,7 @@
 package boltorm
 
 import (
+	"sort"
 	"sync"
 )
 
@@ -110,6 +111,44 @@ func (t *memoryTx) Get(bucket, key []byte, data interface{}) error {
 	}
 	bytes := dataBucket[len(dataBucket)-1]
 	return decodeData(bytes, data)
+}
+
+type sorter struct {
+	key  string
+	data interface{}
+}
+
+type sorterSort []sorter
+
+func (s *sorterSort) Len() int {
+	return len(*s)
+}
+
+func (s *sorterSort) Less(i, j int) bool {
+	return (*s)[i].key < (*s)[j].key
+}
+
+func (s *sorterSort) Swap(i, j int) {
+	(*s)[i], (*s)[j] = (*s)[j], (*s)[i]
+}
+
+func (t *memoryTx) GetAll(bucketName []byte, dataType interface{}) (interface{}, error) {
+	ret := makeSliceFor(dataType)
+	sortSlice := sorterSort{}
+	bucket := (*t.buckets)[string(bucketName)]
+	for key, dataBucket := range bucket.data {
+		bytes := dataBucket[len(dataBucket)-1]
+		nextElement := makeNew(dataType)
+		if err := decodeData(bytes, nextElement); err != nil {
+			return nil, err
+		}
+		sortSlice = append(sortSlice, sorter{string(key), nextElement})
+	}
+	sort.Sort(&sortSlice)
+	for _, elm := range(sortSlice) {
+		ret = appendToSlice(ret, elm.data)
+	}
+	return ret, nil
 }
 
 func (t *memoryTx) GetByIndex(indexBucket, dataBucket, index []byte, data interface{}) error {

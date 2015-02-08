@@ -204,6 +204,43 @@ func sharedTests(db DB) func() {
 						})
 						Convey("Should fail with transaction is read only error", txReadOnlyTest(err))
 					})
+					Convey("And fetching all records should work", func() {
+						var list []*testData
+						err := db.View(func(tx Tx) error {
+							if d, err := tx.GetAll(bucket1, &testData{}); err != nil {
+								return err
+							} else {
+								list = d.([]*testData)
+								return nil
+							}
+						})
+						So(err, ShouldBeNil)
+						Convey("With only my one record found", func() {
+							So(list, ShouldResemble, []*testData{&testData{5}})
+						})
+					})
+					Convey("And with an extra record", func() {
+						data := testData{6}
+						err := db.Update(func(tx Tx) error {
+							return tx.Insert(bucket1, []byte("KeyB"), &data)
+						})
+						So(err, ShouldBeNil)
+						Convey("A successful fetching of all records", func() {
+							var list []*testData
+							err := db.View(func(tx Tx) error {
+								if d, err := tx.GetAll(bucket1, &testData{}); err != nil {
+									return err
+								} else {
+									list = d.([]*testData)
+									return nil
+								}
+							})
+							So(err, ShouldBeNil)
+							Convey("Should return both", func() {
+								So(list, ShouldResemble, []*testData{&testData{5}, &testData{6}})
+							})
+						})
+					})
 				})
 			})
 			Convey("Fetching a nonexistent record", func() {
