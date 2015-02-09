@@ -2,14 +2,14 @@
 
 angular.module('ccj16reg.view.register', ['ngRoute', 'ngMaterial', 'ccj16reg.registration'])
 
-.config(['$routeProvider', function($routeProvider) {
+.config(function($routeProvider) {
 	$routeProvider.when('/register', {
 		templateUrl: 'views/register/register.html',
 		controller: 'RegisterCtrl'
 	});
-}])
+})
 
-.controller('RegisterCtrl', ['$scope', '$location', '$mdDialog', 'registration', function($scope, $location, $mdDialog, registration) {
+.controller('RegisterCtrl', function($scope, $location, $mdDialog, registration) {
 	$scope.registration = new registration();
 
 	$scope.$watch('registration.agreedToEmailTerms()', function(checked) {
@@ -51,4 +51,4 @@ angular.module('ccj16reg.view.register', ['ngRoute', 'ngMaterial', 'ccj16reg.reg
 			});
 		}
 	};
-}]);
+});

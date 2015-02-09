@@ -2,7 +2,7 @@
 
 angular.module('ccj16reg.view.registration', ['ngRoute', 'ngMaterial', 'ccj16reg.registration'])
 
-.config(['$routeProvider', function($routeProvider) {
+.config(function($routeProvider) {
 	$routeProvider.when('/registration/:securityKey', {
 		templateUrl: 'views/registration/registration.html',
 		controller: 'RegistrationCtrl',
@@ -12,7 +12,7 @@ angular.module('ccj16reg.view.registration', ['ngRoute', 'ngMaterial', 'ccj16reg
 			},
 		},
 	});
-}])
+})
 
 .controller('RegistrationCtrl', function($scope, $routeParams, $window, registrationData) {
 	$scope.registration = registrationData;

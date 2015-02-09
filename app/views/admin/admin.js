@@ -2,7 +2,7 @@
 
 angular.module('ccj16reg.view.admin', ['ngRoute', 'ngMaterial', 'ccj16reg.authentication'])
 
-.config(['$routeProvider', function($routeProvider) {
+.config(function($routeProvider) {
 	$routeProvider.when('/admin/', {
 		templateUrl: 'views/admin/admin.html',
 		controller: 'AdminCtrl',
@@ -10,7 +10,7 @@ angular.module('ccj16reg.view.admin', ['ngRoute', 'ngMaterial', 'ccj16reg.authen
 			checkAuth: loginRequired,
 		},
 	});
-}])
+})
 
 .controller('AdminCtrl', function() {
 });

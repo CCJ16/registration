@@ -2,12 +2,12 @@
 
 angular.module('ccj16reg.view.login', ['ngRoute', 'ngMaterial', 'ccj16reg.authentication'])
 
-.config(['$routeProvider', function($routeProvider) {
+.config(function($routeProvider) {
 	$routeProvider.when('/login', {
 		templateUrl: 'views/login/login.html',
 		controller: 'LoginCtrl'
 	});
-}])
+})
 
 .controller('LoginCtrl', function($scope, $location, $mdDialog, authentication) {
 	gapi.signin.render('myButton', {
