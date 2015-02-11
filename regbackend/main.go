@@ -217,7 +217,7 @@ func (h *xsrfVerifierHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	if err := h.creator.setXsrfToken(w, r); err != nil {
 		log.Print("Failed to create new token when verifying, error swallowed (%s)!", err)
 	}
-	if len(tokenHeader) != 0 && subtle.ConstantTimeCompare([]byte(tokenSession), []byte(tokenHeader)) == 1 {
+	if len(tokenHeader) != 0 && len(tokenSession) == len(tokenHeader) && subtle.ConstantTimeCompare([]byte(tokenSession), []byte(tokenHeader)) == 1 {
 		h.Handler.ServeHTTP(w, r)
 	} else {
 		http.Error(w, "Invalid XSRF token", http.StatusBadRequest)
