@@ -278,8 +278,7 @@ func setupStandardHandlers(globalRouter httpRouter, db *bolt.DB) (http.Handler, 
 
 	globalRouter.Handle("/api/", &xsrfVerifierHandler{&xsrfTokenCreator{nil, boltStore}, apiR})
 	otherFiles := http.FileServer(http.Dir(generalConfig.StaticFilesLocation))
-	globalRouter.Handle("/app.css", otherFiles)
-	globalRouter.Handle("/app.js", otherFiles)
+	globalRouter.Handle("/app/", otherFiles)
 	globalRouter.Handle("/components/", otherFiles)
 	globalRouter.Handle("/views/", otherFiles)
 	globalRouter.Handle("/bower_components/", otherFiles)
