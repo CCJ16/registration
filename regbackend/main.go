@@ -17,7 +17,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/spacemonkeygo/errors"
 	"github.com/spacemonkeygo/errors/errhttp"
-	goflagutils "github.com/spacemonkeygo/flagfile/utils"
+	goflagutils "github.com/MJDSys/flagfile/utils"
 	"github.com/yosssi/boltstore/reaper"
 	"github.com/yosssi/boltstore/store"
 )
