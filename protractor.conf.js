@@ -1,39 +1,39 @@
-'use strict';
+"use strict";
 
-var request = require('request');
+var request = require("request");
 
 exports.config = {
 	allScriptsTimeout: 11000,
 
 	specs: [
-		'e2e-tests/*.js'
+		"e2e-tests/*.js"
 	],
 
 	capabilities: {
-		'browserName': 'chrome'
+		"browserName": "chrome"
 	},
 
-	baseUrl: 'http://localhost:9090',
+	baseUrl: "http://localhost:9090",
 	onPrepare: function() {
 		// Disable animations so e2e tests run more quickly
-		browser.addMockModule('disableNgAnimate', function() {
-			angular.module('disableNgAnimate', []).run(['$animate', function($animate) {
+		browser.addMockModule("disableNgAnimate", function() {
+			angular.module("disableNgAnimate", []).run(["$animate", function($animate) {
 				$animate.enabled(false);
 			}]);
 		});
 
 		var defer = protractor.promise.defer();
-		request(browser.baseUrl + '/test_is_integration', function(error, response, body) {
-			if (!error && response.statusCode == 418 && body == 'true') {
+		request(browser.baseUrl + "/test_is_integration", function(error, response, body) {
+			if (!error && response.statusCode === 418 && body === "true") {
 				defer.fulfill(body);
 			} else {
-				defer.reject('Not running against integration!');
+				defer.reject("Not running against integration!");
 			}
 		});
 		return defer.promise;
 	},
 
-	framework: 'jasmine',
+	framework: "jasmine",
 
 	jasmineNodeOpts: {
 		defaultTimeoutInterval: 30000

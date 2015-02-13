@@ -1,48 +1,50 @@
+"use strict";
+
 module.exports = function(config){
 	if (!process.env.SAUCE_USERNAME || !process.env.SAUCE_ACCESS_KEY) {
-		console.log('Make sure the SAUCE_USERNAME and SAUCE_ACCESS_KEY environment variables are set.');
+		console.log("Make sure the SAUCE_USERNAME and SAUCE_ACCESS_KEY environment variables are set.");
 		process.exit(1);
 	}
 	var customLaunchers = {
-		'SL_Chrome': {
-			base: 'SauceLabs',
-			browserName: 'chrome',
-			version: '39',
+		"SL_Chrome": {
+			base: "SauceLabs",
+			browserName: "chrome",
+			version: "39",
 		},
-		'SL_Firefox': {
-			base: 'SauceLabs',
-			browserName: 'firefox',
-			version: '35',
+		"SL_Firefox": {
+			base: "SauceLabs",
+			browserName: "firefox",
+			version: "35",
 		},
-		'SL_IE_11': {
-			base: 'SauceLabs',
-			browserName: 'internet explorer',
+		"SL_IE_11": {
+			base: "SauceLabs",
+			browserName: "internet explorer",
 			version: 11,
 		},
 	};
 
 	config.set({
-		basePath : './',
+		basePath : "./",
 
 		files : [
-			'app/bower_components/angular/angular.js',
-			'app/bower_components/angular-*/angular-*.js',
-			'app/components/**/*.js',
-			'app/views/**/*.js'
+			"app/bower_components/angular/angular.js",
+			"app/bower_components/angular-*/angular-*.js",
+			"app/components/**/*.js",
+			"app/views/**/*.js"
 		],
 
 		singleRun : true,
 
-		frameworks: ['jasmine'],
+		frameworks: ["jasmine"],
 
 		browsers: Object.keys(customLaunchers),
 		customLaunchers: customLaunchers,
 		sauceLabs: {
-			testName: 'CCJ16 Registration (unit)',
+			testName: "CCJ16 Registration (unit)",
 			recordScreenshots: false,
 			connectOptions: {
 				port: 5757,
-				logfile: 'sauce_connect.log'
+				logfile: "sauce_connect.log"
 			}
 		},
 		captureTimeout: 0,
@@ -51,20 +53,20 @@ module.exports = function(config){
 		browserNoActivityTimeout: 30000,
 
 		plugins : [
-			'karma-sauce-launcher',
-			'karma-jasmine',
-			'karma-junit-reporter'
+			"karma-sauce-launcher",
+			"karma-jasmine",
+			"karma-junit-reporter"
 		],
 
-		reporters: ['progress', 'saucelabs'],
+		reporters: ["progress", "saucelabs"],
 		junitReporter : {
-			outputFile: 'test_out/unit.xml',
-			suite: 'unit'
+			outputFile: "test_out/unit.xml",
+			suite: "unit"
 		}
 	});
 
 	if (process.env.TRAVIS) {
-		var buildLabel = 'TRAVIS #' + process.env.TRAVIS_BUILD_NUMBER + ' (' + process.env.TRAVIS_BUILD_ID + ')';
+		var buildLabel = "TRAVIS #" + process.env.TRAVIS_BUILD_NUMBER + " (" + process.env.TRAVIS_BUILD_ID + ")";
 
 		// Karma (with socket.io 1.x) buffers by 50 and 50 tests can take a long time on IEs;-)
 		config.browserNoActivityTimeout = 120000;

@@ -1,9 +1,10 @@
 {
+	"node": true,
+	"jasmine": true,
 	"browser": true,
 	"asi": true,
 	"esnext": true,
 	"bitwise": true,
-	"camelcase": true,
 	"curly": true,
 	"eqeqeq": true,
 	"freeze": true,
@@ -20,6 +21,10 @@
 	"strict": true,
 	"globals": {
 		"angular": false,
-		"gapi": false
+		"inject": false,
+		"protractor": false,
+		"browser": false,
+		"by": false,
+		"element": false
 	}
 }

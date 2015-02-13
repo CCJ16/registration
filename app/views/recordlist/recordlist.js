@@ -1,17 +1,17 @@
-'use strict';
+angular.module("ccj16reg.view.recordlist", ["ngRoute", "ccj16reg.registration", "ccj16reg.common"])
 
-angular.module('ccj16reg.view.recordlist', ['ngRoute', 'ccj16reg.registration'])
-
-.config(function($routeProvider) {
-	$routeProvider.when('/admin/recordlist', {
-		templateUrl: 'views/recordlist/list.html',
-		controller: 'RecordListCtrl',
+.config(function($routeProvider, resolveLoginRequired) {
+	"use strict";
+	$routeProvider.when("/admin/recordlist", {
+		templateUrl: "views/recordlist/list.html",
+		controller: "RecordListCtrl",
 		resolve: {
-			checkAuth: loginRequired,
+			checkAuth: resolveLoginRequired,
 		},
 	});
 })
 
-.controller('RecordListCtrl', function($scope, registration) {
-	$scope.registrations = registration.query();
+.controller("RecordListCtrl", function($scope, Registration) {
+	"use strict";
+	$scope.registrations = Registration.query();
 });

@@ -1,16 +1,16 @@
-'use strict';
+angular.module("ccj16reg.view.admin", ["ngRoute", "ngMaterial", "ccj16reg.authentication", "ccj16reg.common"])
 
-angular.module('ccj16reg.view.admin', ['ngRoute', 'ngMaterial', 'ccj16reg.authentication'])
-
-.config(function($routeProvider) {
-	$routeProvider.when('/admin/', {
-		templateUrl: 'views/admin/admin.html',
-		controller: 'AdminCtrl',
+.config(function($routeProvider, resolveLoginRequired) {
+	"use strict";
+	$routeProvider.when("/admin/", {
+		templateUrl: "views/admin/admin.html",
+		controller: "AdminCtrl",
 		resolve: {
-			checkAuth: loginRequired,
+			checkAuth: resolveLoginRequired,
 		},
 	});
 })
 
-.controller('AdminCtrl', function() {
+.controller("AdminCtrl", function() {
+	"use strict";
 });

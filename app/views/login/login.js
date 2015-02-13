@@ -1,16 +1,16 @@
-'use strict';
-
-angular.module('ccj16reg.view.login', ['ngRoute', 'ngMaterial', 'ccj16reg.authentication'])
+angular.module("ccj16reg.view.login", ["ngRoute", "ngMaterial", "ccj16reg.authentication"])
 
 .config(function($routeProvider) {
-	$routeProvider.when('/login', {
-		templateUrl: 'views/login/login.html',
-		controller: 'LoginCtrl'
+	"use strict";
+	$routeProvider.when("/login", {
+		templateUrl: "views/login/login.html",
+		controller: "LoginCtrl"
 	});
 })
 
-.controller('LoginCtrl', function($scope, $location, $mdDialog, authentication) {
-	gapi.signin.render('myButton', {
+.controller("LoginCtrl", function($scope, $location, $mdDialog, authentication) {
+	"use strict";
+	gapi.signin.render("myButton", {
 		callback: function(authResult) {
 			$scope.$apply(function() {
 				callback(authResult);
@@ -23,19 +23,19 @@ angular.module('ccj16reg.view.login', ['ngRoute', 'ngMaterial', 'ccj16reg.authen
 				if (!loggedIn) {
 					$mdDialog.show(
 						$mdDialog.alert()
-							.title('Failed to login')
-							.content('Server refused your account, please try again.')
-							.ok('OK')
+							.title("Failed to login")
+							.content("Server refused your account, please try again.")
+							.ok("OK")
 					);
 				} else {
-					$location.path('/admin/');
+					$location.path("/admin/");
 				}
 			}, function() {
 				$mdDialog.show(
 					$mdDialog.alert()
-						.title('Failed to login')
-						.content('Server messed up, please complain loudly.')
-						.ok('OK')
+						.title("Failed to login")
+						.content("Server messed up, please complain loudly.")
+						.ok("OK")
 				);
 			});
 		}

@@ -1,68 +1,68 @@
-'use strict';
+"use strict";
 
-describe('ccj16reg.registration module', function() {
+describe("ccj16reg.registration module", function() {
 
-	beforeEach(module('ccj16reg.registration'));
+	beforeEach(module("ccj16reg.registration"));
 
-	describe('registration service', function() {
-		var $httpBackend, registration, curDate = new Date().toISOString();
+	describe("registration service", function() {
+		var $httpBackend, Registration, curDate = new Date().toISOString();
 
 		beforeEach(function() {
 			module(function($provide) {
-				$provide.value('currentDateFetch', function() {
+				$provide.value("currentDateFetch", function() {
 					return curDate;
 				});
 			});
 		});
 
-		beforeEach(inject(function($injector, _registration_) {
-			$httpBackend = $injector.get('$httpBackend');
+		beforeEach(inject(function($injector, _Registration_) {
+			$httpBackend = $injector.get("$httpBackend");
 
-			registration = _registration_;
+			Registration = _Registration_;
 		}))
 
 		afterEach(function() {
 			$httpBackend.verifyNoOutstandingExpectation();
 			$httpBackend.verifyNoOutstandingRequest();
 		});
-		it('should give a useful model', function() {
-			var newReg = new registration();
+		it("should give a useful model", function() {
+			var newReg = new Registration();
 			expect(newReg).toBeDefined();
 			expect(newReg.$save).not.toBeNull();
 		});
 
-		describe('should have a working agreedToEmailTerms', function() {
+		describe("should have a working agreedToEmailTerms", function() {
 
-			it('should exist as a function', function() {
-				var newReg = new registration();
+			it("should exist as a function", function() {
+				var newReg = new Registration();
 				expect(newReg.agreedToEmailTerms).toBeDefined();
 			});
 
-			it('should return false for an empty object', function() {
-				var newReg = new registration();
+			it("should return false for an empty object", function() {
+				var newReg = new Registration();
 				expect(newReg.agreedToEmailTerms()).toBe(false);
 			});
 
-			it('should return false for a zero date from Go', function() {
-				var newReg = new registration();
+			it("should return false for a zero date from Go", function() {
+				var newReg = new Registration();
 				newReg.emailApprovalGivenAt = "0001-01-01T00:00:00Z";
 				expect(newReg.agreedToEmailTerms()).toBe(false);
 			});
 
-			it('should return true when set', function() {
-				var newReg = new registration();
+			it("should return true when set", function() {
+				var newReg = new Registration();
 				newReg.emailApprovalGivenAt = new Date().toISOString();
 				expect(newReg.agreedToEmailTerms()).toBe(true);
 			});
 
-			it('should set the current (injected) date when set to true.', function() {
-				var newReg = new registration();
+			it("should set the current (injected) date when set to true.", function() {
+				var newReg = new Registration();
 				expect(newReg.agreedToEmailTerms(true)).toBe(true);
 				expect(newReg.emailApprovalGivenAt).toBe(curDate);
 			});
 
-			it('should keep the original time if asked to be true again.', function() {
-				var newReg = new registration();
+			it("should keep the original time if asked to be true again.", function() {
+				var newReg = new Registration();
 				expect(newReg.agreedToEmailTerms(true)).toBe(true);
 				expect(newReg.emailApprovalGivenAt).toBe(curDate);
 
@@ -72,12 +72,11 @@ describe('ccj16reg.registration module', function() {
 				expect(newReg.emailApprovalGivenAt).toBe(oldDate);
 			});
 
-			it('should get the current time if asked to be true after being false.', function() {
-				var newReg = new registration();
+			it("should get the current time if asked to be true after being false.", function() {
+				var newReg = new Registration();
 				expect(newReg.agreedToEmailTerms(true)).toBe(true);
 				expect(newReg.emailApprovalGivenAt).toBe(curDate);
 
-				var oldDate = curDate;
 				curDate = new Date().toISOString();
 
 				expect(newReg.agreedToEmailTerms(false)).toBe(false);
@@ -85,14 +84,14 @@ describe('ccj16reg.registration module', function() {
 				expect(newReg.emailApprovalGivenAt).toBe(curDate);
 			});
 
-			it('should stay undefined when set to being false.', function() {
-				var newReg = new registration();
+			it("should stay undefined when set to being false.", function() {
+				var newReg = new Registration();
 				expect(newReg.agreedToEmailTerms(false)).toBe(false);
 				expect(newReg.emailApprovalGivenAt).not.toBeDefined();
 			});
 
-			it('should set it back to undefined when set to being false.', function() {
-				var newReg = new registration();
+			it("should set it back to undefined when set to being false.", function() {
+				var newReg = new Registration();
 				expect(newReg.agreedToEmailTerms(true)).toBe(true);
 				expect(newReg.emailApprovalGivenAt).toBe(curDate);
 				expect(newReg.agreedToEmailTerms(false)).toBe(false);
@@ -100,14 +99,14 @@ describe('ccj16reg.registration module', function() {
 			});
 		});
 
-		it('that will save itself to a new object on save()', function() {
-			var newReg = new registration();
+		it("that will save itself to a new object on save()", function() {
+			var newReg = new Registration();
 			newReg.council = "A council";
 			newReg.groupName = "4th Group";
 			newReg.packName = "Pack G";
 			newReg.contactLeaderEmail = "test@example.com";
 
-			$httpBackend.expectPOST('/api/preregistration', angular.toJson(newReg)).respond(201, '');
+			$httpBackend.expectPOST("/api/preregistration", angular.toJson(newReg)).respond(201, "");
 
 			newReg.$save().then(function() {}, function(message) {
 				console.log(message);
@@ -116,38 +115,38 @@ describe('ccj16reg.registration module', function() {
 			$httpBackend.flush()
 		});
 
-		describe('should have a working validatedEmail', function() {
+		describe("should have a working validatedEmail", function() {
 
-			it('should exist as a function', function() {
-				var newReg = new registration();
+			it("should exist as a function", function() {
+				var newReg = new Registration();
 				expect(newReg.validatedEmail).toBeDefined();
 			});
 
-			it('should return false for an empty object', function() {
-				var newReg = new registration();
+			it("should return false for an empty object", function() {
+				var newReg = new Registration();
 				expect(newReg.validatedEmail()).toBe(false);
 			});
 
-			it('should return false for a zero date from Go', function() {
-				var newReg = new registration();
+			it("should return false for a zero date from Go", function() {
+				var newReg = new Registration();
 				newReg.validatedOn = "0001-01-01T00:00:00Z";
 				expect(newReg.validatedEmail()).toBe(false);
 			});
 
-			it('should return true when set', function() {
-				var newReg = new registration();
+			it("should return true when set", function() {
+				var newReg = new Registration();
 				newReg.validatedOn = new Date().toISOString();
 				expect(newReg.validatedEmail()).toBe(true);
 			});
 		});
 
-		describe('will have an interface for confirming emails', function() {
-			it('that succeeds with valid information', function() {
+		describe("will have an interface for confirming emails", function() {
+			it("that succeeds with valid information", function() {
 				var good;
 
-				$httpBackend.expectPUT('/api/confirmpreregistration?email=test@example.com', 'validToken').respond(204, '');
+				$httpBackend.expectPUT("/api/confirmpreregistration?email=test@example.com", "validToken").respond(204, "");
 
-				registration.confirmEmail('test@example.com', 'validToken').then(function() {
+				Registration.confirmEmail("test@example.com", "validToken").then(function() {
 					good = true;
 				}, function() {
 					good = false;
@@ -157,12 +156,12 @@ describe('ccj16reg.registration module', function() {
 
 				expect(good).toBe(true);
 			});
-			it('that fails with bad information', function() {
+			it("that fails with bad information", function() {
 				var good;
 
-				$httpBackend.expectPUT('/api/confirmpreregistration?email=test@example.com', 'badToken').respond(400, '');
+				$httpBackend.expectPUT("/api/confirmpreregistration?email=test@example.com", "badToken").respond(400, "");
 
-				registration.confirmEmail('test@example.com', 'badToken').then(function() {
+				Registration.confirmEmail("test@example.com", "badToken").then(function() {
 					good = true;
 				}, function() {
 					good = false;
@@ -175,7 +174,7 @@ describe('ccj16reg.registration module', function() {
 		});
 	});
 
-	describe('currentDateFetch service', function() {
+	describe("currentDateFetch service", function() {
 		var oldDateFunction, currentDateFetch;
 		var curDate = new Date();
 		var newDateFunction = function() {
@@ -194,7 +193,7 @@ describe('ccj16reg.registration module', function() {
 			currentDateFetch = _currentDateFetch_;
 		}))
 
-		it('should return the current date', function() {
+		it("should return the current date", function() {
 			expect(currentDateFetch()).toBe(curDate.toISOString());
 		});
 	});

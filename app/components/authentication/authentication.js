@@ -1,14 +1,13 @@
-'use strict';
-
-angular.module('ccj16reg.authentication', [])
-.factory('authentication', function($http, $q) {
+angular.module("ccj16reg.authentication", [])
+.factory("authentication", function($http, $q) {
+	"use strict";
 	var loggedInP = null;
 	return {
 		isLoggedIn: function() {
-			if (loggedInP == null) {
+			if (loggedInP === null) {
 				loggedInP = $q(function(resolve, reject) {
-					$http.get('/api/authentication/isLoggedIn').then(function(response) {
-						if (response.data === 'true') {
+					$http.get("/api/authentication/isLoggedIn").then(function(response) {
+						if (response.data === "true") {
 							resolve(true);
 						} else {
 							resolve(false);
@@ -22,8 +21,8 @@ angular.module('ccj16reg.authentication', [])
 		},
 		tryGoogleToken: function(token) {
 			loggedInP = $q(function(resolve, reject) {
-				$http.post('/api/authentication/googletoken', token).then(function(response) {
-					if (response.data === 'true') {
+				$http.post("/api/authentication/googletoken", token).then(function(response) {
+					if (response.data === "true") {
 						resolve(true);
 					} else {
 						resolve(false);

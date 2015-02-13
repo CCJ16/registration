@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-var request = require('request');
+var request = require("request");
 
 exports.config = {
 	sauceUser: process.env.SAUCE_USERNAME,
@@ -9,63 +9,63 @@ exports.config = {
 	allScriptsTimeout: 11000,
 
 	specs: [
-		'e2e-tests/*.js'
+		"e2e-tests/*.js"
 	],
 
 	multiCapabilities: [
-		addCommon({browserName: 'chrome', version: 39}),
-		addCommon({browserName: 'firefox', version: 34}),
-		addCommon({browserName: 'internet explorer', version: 11}),
-		addCommon({browserName: 'internet explorer', version: 10}),
-		addCommon({browserName: 'safari', version: '8', platform: 'OS X 10.10'}),
+		addCommon({browserName: "chrome", version: 39}),
+		addCommon({browserName: "firefox", version: 34}),
+		addCommon({browserName: "internet explorer", version: 11}),
+		addCommon({browserName: "internet explorer", version: 10}),
+		addCommon({browserName: "safari", version: "8", platform: "OS X 10.10"}),
 	],
 
-	baseUrl: 'http://localhost:9090',
+	baseUrl: "http://localhost:9090",
 	onPrepare: function() {
 		// Disable animations so e2e tests run more quickly
-		browser.addMockModule('disableNgAnimate', function() {
-			angular.module('disableNgAnimate', []).run(['$animate', function($animate) {
+		browser.addMockModule("disableNgAnimate", function() {
+			angular.module("disableNgAnimate", []).run(["$animate", function($animate) {
 				$animate.enabled(false);
 			}]);
 		});
 
 		var defer = protractor.promise.defer();
-		request(browser.baseUrl + '/test_is_integration', function(error, response, body) {
-			if (!error && response.statusCode == 418 && body == 'true') {
+		request(browser.baseUrl + "/test_is_integration", function(error, response, body) {
+			if (!error && response.statusCode === 418 && body === "true") {
 				defer.fulfill(body);
 			} else {
-				defer.reject('Not running against integration!');
+				defer.reject("Not running against integration!");
 			}
 		});
 		return defer.promise;
 	},
 
-	framework: 'jasmine',
+	framework: "jasmine",
 
 	jasmineNodeOpts: {
 		defaultTimeoutInterval: 60000
 	}
 };
 function addCommon(capabilities) {
-	var buildLabel = 'TRAVIS #' + process.env.TRAVIS_BUILD_NUMBER + ' (' + process.env.TRAVIS_BUILD_ID + ')';
+	var buildLabel = "TRAVIS #" + process.env.TRAVIS_BUILD_NUMBER + " (" + process.env.TRAVIS_BUILD_ID + ")";
 	if (process.env.TRAVIS) {
 		return {
-			'tunnel-identifier': process.env.TRAVIS_JOB_NUMBER,
+			"tunnel-identifier": process.env.TRAVIS_JOB_NUMBER,
 
-			'name': 'CCJ16 Registration (e2e)',
-			'build': buildLabel,
+			"name": "CCJ16 Registration (e2e)",
+			"build": buildLabel,
 
-			'browserName': capabilities.browserName,
-			'platform': capabilities.platform,
-			'version': capabilities.version,
-			'device-orientation': capabilities['device-orientation'],
+			"browserName": capabilities.browserName,
+			"platform": capabilities.platform,
+			"version": capabilities.version,
+			"device-orientation": capabilities["device-orientation"],
 		};
 	} else {
 		return {
-			'browserName': capabilities.browserName,
-			'platform': capabilities.platform,
-			'version': capabilities.version,
-			'device-orientation': capabilities['device-orientation'],
+			"browserName": capabilities.browserName,
+			"platform": capabilities.platform,
+			"version": capabilities.version,
+			"device-orientation": capabilities["device-orientation"],
 		};
 	}
 }
