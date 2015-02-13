@@ -44,7 +44,7 @@ exports.config = {
 	framework: 'jasmine',
 
 	jasmineNodeOpts: {
-		defaultTimeoutInterval: 30000
+		defaultTimeoutInterval: 60000
 	}
 };
 function addCommon(capabilities) {
