@@ -10,12 +10,13 @@
 	<meta name="google-signin-clientid" content="530230830469-5ofnn4kb0pv7t1ckumbtgiu9viik2lmv.apps.googleusercontent.com" />
 	<meta name="google-signin-cookiepolicy" content="single_host_origin" />
 	<meta name="google-signin-scope" content="email" />
+	<!-- build:css(app) app/app.css -->
 	<link rel="stylesheet" href="bower_components/html5-boilerplate/css/normalize.css">
 	<link rel="stylesheet" href="bower_components/html5-boilerplate/css/main.css">
 	<link rel="stylesheet" href="bower_components/angular-material/angular-material.css">
 	<link rel="stylesheet" href="app/app.css">
 	<link rel="stylesheet" href="views/recordlist/recordlist.css">
-	<script src="bower_components/html5-boilerplate/js/vendor/modernizr-2.6.2.min.js"></script>
+	<!-- endbuild -->
 </head>
 <body layout="column">
 	<!--[if lt IE 9]>
@@ -28,7 +29,7 @@
 			<md-content ng-view layout="column" flex></md-content>
 		</div>
 	</div>
-
+    <!-- build:js(app) app/app.js -->
 	<script src="bower_components/angular/angular.js"></script>
 	<script src="bower_components/angular-animate/angular-animate.js"></script>
 	<script src="bower_components/angular-aria/angular-aria.js"></script>
@@ -45,6 +46,7 @@
 	<script src="views/emailConfirmation/emailConfirmation.js"></script>
 	<script src="components/authentication/authentication.js"></script>
 	<script src="components/registration/registration.js"></script>
+<!-- endbuild -->
 	<script src="https://apis.google.com/js/client:platform.js"></script>
 </body>
 </html>

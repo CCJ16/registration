@@ -281,6 +281,7 @@ func setupStandardHandlers(globalRouter httpRouter, db *bolt.DB) (http.Handler, 
 	globalRouter.Handle("/app/", otherFiles)
 	globalRouter.Handle("/components/", otherFiles)
 	globalRouter.Handle("/views/", otherFiles)
+	globalRouter.Handle("/images/", otherFiles)
 	globalRouter.Handle("/bower_components/", otherFiles)
 	indexLocation := generalConfig.StaticFilesLocation + "/index.html"
 	globalRouter.Handle("/", &xsrfTokenCreator{http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
