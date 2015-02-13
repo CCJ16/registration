@@ -216,7 +216,7 @@ func sharedTests(db DB) func() {
 						})
 						So(err, ShouldBeNil)
 						Convey("With only my one record found", func() {
-							So(list, ShouldResemble, []*testData{&testData{5}})
+							So(list, ShouldResemble, []*testData{{5}})
 						})
 					})
 					Convey("And with an extra record", func() {
@@ -237,7 +237,7 @@ func sharedTests(db DB) func() {
 							})
 							So(err, ShouldBeNil)
 							Convey("Should return both", func() {
-								So(list, ShouldResemble, []*testData{&testData{5}, &testData{6}})
+								So(list, ShouldResemble, []*testData{{5}, {6}})
 							})
 						})
 					})

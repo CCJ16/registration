@@ -145,7 +145,7 @@ func (t *memoryTx) GetAll(bucketName []byte, dataType interface{}) (interface{},
 		sortSlice = append(sortSlice, sorter{string(key), nextElement})
 	}
 	sort.Sort(&sortSlice)
-	for _, elm := range(sortSlice) {
+	for _, elm := range sortSlice {
 		ret = appendToSlice(ret, elm.data)
 	}
 	return ret, nil

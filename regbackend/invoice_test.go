@@ -19,12 +19,12 @@ func TestInvoiceStorage(t *testing.T) {
 			invoice := Invoice{
 				To: "Test group of Test Council",
 				LineItems: []InvoiceItem{
-					InvoiceItem{
+					{
 						Description: "Item 1",
 						UnitPrice:   1034,
 						Count:       3,
 					},
-					InvoiceItem{
+					{
 						Description: "Item 2",
 						UnitPrice:   60,
 						Count:       1000,

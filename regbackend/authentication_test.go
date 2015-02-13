@@ -7,8 +7,8 @@ import (
 
 	"github.com/gorilla/sessions"
 
-	"testing"
 	. "github.com/smartystreets/goconvey/convey"
+	"testing"
 )
 
 func TestVerifySession(t *testing.T) {

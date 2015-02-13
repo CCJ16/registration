@@ -6,9 +6,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/google/google-api-go-client/plus/v1"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	"github.com/google/google-api-go-client/plus/v1"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -56,8 +56,8 @@ func (a *AuthenticationHandler) VerifyGoogleToken(w http.ResponseWriter, r *http
 	conf := &oauth2.Config{
 		ClientID:     authConfig.ClientID,
 		ClientSecret: authConfig.ClientSecret,
-		RedirectURL: "postmessage",
-		Endpoint: google.Endpoint,
+		RedirectURL:  "postmessage",
+		Endpoint:     google.Endpoint,
 	}
 	tok, err := conf.Exchange(oauth2.NoContext, code)
 	if err != nil {
