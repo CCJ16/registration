@@ -18,7 +18,6 @@ exports.config = {
 		addCommon({browserName: 'internet explorer', version: 11}),
 		addCommon({browserName: 'internet explorer', version: 10}),
 		addCommon({browserName: 'safari', version: '8', platform: 'OS X 10.10'}),
-		addCommon({browserName: 'iphone', version: '8.1', platform: 'OS X 10.10', 'device-orientation': 'portrait'}),
 	],
 
 	baseUrl: 'http://localhost:9090',
