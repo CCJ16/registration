@@ -10,3 +10,9 @@ table.recordlist thead tr {
 table.recordlist tr:nth-child(odd) td {
 	background-color: #FFEBEE;
 }
+
+@media print {
+	table.recordlist td:last-child, th:last-child {
+		display: none;
+	}
+}
