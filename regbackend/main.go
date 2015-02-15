@@ -121,22 +121,32 @@ type sessionSaver struct {
 type wWrapperSession struct {
 	req *http.Request
 	http.ResponseWriter
-	valid bool
+	valid        bool
+	sessionSaved bool
+}
+
+func (w *wWrapperSession) saveSession() bool {
+	if !w.sessionSaved {
+		err := sessions.Save(w.req, w.ResponseWriter)
+		if err != nil {
+			http.Error(w.ResponseWriter, "Failed to save user session", http.StatusServiceUnavailable)
+			log.Print("Failed to setup user session: ", err)
+			w.valid = false
+			return false
+		}
+		w.sessionSaved = true
+	}
+	return true
 }
 
 func (w *wWrapperSession) WriteHeader(code int) {
-	err := sessions.Save(w.req, w.ResponseWriter)
-	if err != nil {
-		http.Error(w.ResponseWriter, "Failed to save user session", http.StatusServiceUnavailable)
-		log.Print("Failed to setup user session: ", err)
-		w.valid = false
-		return
+	if w.saveSession() {
+		w.ResponseWriter.WriteHeader(code)
 	}
-	w.ResponseWriter.WriteHeader(code)
 }
 
 func (w *wWrapperSession) Write(p []byte) (int, error) {
-	if !w.valid {
+	if !w.valid || !w.saveSession() {
 		return len(p), nil
 	} else {
 		return w.ResponseWriter.Write(p)
@@ -144,7 +154,9 @@ func (w *wWrapperSession) Write(p []byte) (int, error) {
 }
 
 func (h *sessionSaver) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.h.ServeHTTP(&wWrapperSession{r, w, true}, r)
+	wrapper := &wWrapperSession{r, w, true, false}
+	defer wrapper.saveSession()
+	h.h.ServeHTTP(wrapper, r)
 }
 
 func httpError(w http.ResponseWriter, err error) {
