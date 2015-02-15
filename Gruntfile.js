@@ -97,7 +97,10 @@ module.exports = function (grunt) {
 				files: [{
 					expand: true,
 					cwd: ".tmp/styles/",
-					src: "**/*.css",
+					src: [
+						"{bower_components,components,views}/*/*.css",
+						"app/*.css",
+					],
 					dest: ".tmp/styles/"
 				}]
 			}
