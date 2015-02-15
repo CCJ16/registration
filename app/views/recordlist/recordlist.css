@@ -3,7 +3,7 @@ table.recordlist {
 	margin-top: 1em;
 }
 
-table.recordlist tr:first-child {
+table.recordlist thead tr {
 	border-bottom: solid 1px;
 }
 

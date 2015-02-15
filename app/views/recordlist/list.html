@@ -3,26 +3,30 @@
 		<md-card-content>
 			<md-toolbar><h2 class="md-toolbar-tools"><span>Registered group list</span></h2></md-toolbar>
 			<table class="recordlist">
-				<tr>
-					<th>Council</th>
-					<th>Group</th>
-					<th>Pack</th>
-					<th>First Name</th>
-					<th>Last Name</th>
-					<th>Email</th>
-					<th>Phone Number</th>
-					<th>Page</th>
-				</tr>
-				<tr ng-repeat="item in registrations">
-					<td>{{item.council}}</td>
-					<td>{{item.groupName}}</td>
-					<td>{{item.packName}}</td>
-					<td>{{item.contactLeaderFirstName}}</td>
-					<td>{{item.contactLeaderLastName}}</td>
-					<td>{{item.contactLeaderEmail}} <span ng-show="item.validatedEmail()">(Verified)</span></td>
-					<td>{{item.contactLeaderPhoneNumber}}</td>
-					<td><a href="/registration/{{item.securityKey}}">Page</a></td>
-				</tr>
+				<thead>
+					<tr>
+						<th>Council</th>
+						<th>Group</th>
+						<th>Pack</th>
+						<th>First Name</th>
+						<th>Last Name</th>
+						<th>Email</th>
+						<th>Phone Number</th>
+						<th>Page</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="item in registrations">
+						<td>{{item.council}}</td>
+						<td>{{item.groupName}}</td>
+						<td>{{item.packName}}</td>
+						<td>{{item.contactLeaderFirstName}}</td>
+						<td>{{item.contactLeaderLastName}}</td>
+						<td>{{item.contactLeaderEmail}} <span ng-show="item.validatedEmail()">(Verified)</span></td>
+						<td>{{item.contactLeaderPhoneNumber}}</td>
+						<td><a href="/registration/{{item.securityKey}}">Page</a></td>
+					</tr>
+				</tbody>
 			</table>
 		</md-card-content>
 	</md-card>
