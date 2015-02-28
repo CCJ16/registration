@@ -21,7 +21,7 @@
     "grunt-contrib-uglify": "^0.8.0",
     "grunt-contrib-watch": "^0.6.1",
     "grunt-filerev": "^2.1.2",
-    "grunt-image-debower": "^0.0.4",
+    "grunt-image-debower": "^0.0.5",
     "grunt-karma": "^0.10.1",
     "grunt-newer": "^1.1.0",
     "grunt-ng-annotate": "^0.10.0",
