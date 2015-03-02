@@ -51,17 +51,17 @@ describe("Registration information page", function() {
 			var leaderBlock = element.all(by.css("md-card-content")).get(0);
 			expect(leaderBlock.element(by.tagName("h2")).getText()).toBe("Contact Leader");
 
-			expect(leaderBlock.all(by.css("div.form-redisplay")).get(0).element(by.tagName("p")).getText()).toBe("FirstN");
-			expect(leaderBlock.all(by.css("div.form-redisplay")).get(1).element(by.tagName("p")).getText()).toBe("LastN");
-			expect(leaderBlock.all(by.css("div.form-redisplay")).get(2).element(by.tagName("p")).getText()).toBe("test@invalid");
-			expect(leaderBlock.all(by.css("div.form-redisplay")).get(3).element(by.tagName("p")).getText()).toBe("123-456-7890");
+			expect(leaderBlock.all(by.css("div.element")).get(0).element(by.tagName("p")).getText()).toBe("FirstN");
+			expect(leaderBlock.all(by.css("div.element")).get(1).element(by.tagName("p")).getText()).toBe("LastN");
+			expect(leaderBlock.all(by.css("div.element")).get(2).element(by.tagName("p")).getText()).toBe("test@invalid");
+			expect(leaderBlock.all(by.css("div.element")).get(3).element(by.tagName("p")).getText()).toBe("123-456-7890");
 		});
 		it("should have the estimated participant count information", function() {
 			var countBlock = element.all(by.css("md-card-content")).get(1);
 			expect(countBlock.element(by.tagName("h2")).getText()).toBe("Estimated Participant counts");
 
-			expect(countBlock.all(by.css("div.form-redisplay")).get(0).element(by.tagName("p")).getText()).toBe("20");
-			expect(countBlock.all(by.css("div.form-redisplay")).get(1).element(by.tagName("p")).getText()).toBe("12");
+			expect(countBlock.all(by.css("div.element")).get(0).element(by.tagName("p")).getText()).toBe("20");
+			expect(countBlock.all(by.css("div.element")).get(1).element(by.tagName("p")).getText()).toBe("12");
 		});
 	});
 

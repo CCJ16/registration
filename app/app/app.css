@@ -8,27 +8,33 @@
 	margin: auto;
 }
 
-.form-redisplay {
-	display: flex;
-	flex-direction: column;
-	padding: 16px 8px;
+.element-container {
+	padding-top: 8px;
+	margin-left: -8px;
+	margin-right: -8px;
 }
 
-.form-redisplay h4 {
-	margin: 0px 0px 3px;
+.element {
+	display: flex;
+	flex-direction: column;
+	padding: 8px 8px;
+}
+
+.element h4 {
+	margin: 0px;
 	font-weight: 400;
 	font-size: 0.8em;
 	text-align: center;
 }
 
-.form-redisplay p {
+.element p {
 	margin: 0px;
 	text-align: center;
 	overflow-wrap: break-word;
 	word-wrap: break-word;
 }
 
-.form-redisplay md-checkbox {
+.element md-checkbox {
 	margin: auto;
 }
 

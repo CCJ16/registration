@@ -5,24 +5,24 @@
 				<md-toolbar><h2 class="md-toolbar-tools"><span>Contact Leader</span></h2></md-toolbar>
 				<div layout="row" layout-align="center">
 					<div layout="column">
-						<div layout="row" layout-sm="column" layout-align="center">
+						<div layout="row" layout-sm="column" layout-align="center" class="element-container">
 							<div layout="row" flex-ssm layout-align="center">
-								<div class="form-redisplay" flex-sm="60" flex-vsm="50">
+								<div class="element" flex-sm="60" flex-vsm="50">
 									<h4>First Name</h4>
 									<p>{{registration.contactLeaderFirstName}}</p>
 								</div>
-								<div class="form-redisplay" flex-sm="30" flex-vsm="50">
+								<div class="element" flex-sm="30" flex-vsm="50">
 									<h4>Last Name</h4>
 									<p>{{registration.contactLeaderLastName}}</p>
 								</div>
 							</div>
 							<div layout="row" layout-vsm="column" flex-ssm layout-align="center">
-								<div class="form-redisplay" flex-sm="60" flex-vsm="100">
+								<div class="element" flex-sm="60" flex-vsm="100">
 									<h4>Email</h4>
 									<p>{{registration.contactLeaderEmail}}</p>
 									<md-checkbox ng-model="registration.validatedEmail" ng-model-options="{getterSetter: true}" disabled>Verified</md-checkbox>
 								</div>
-								<div class="form-redisplay" flex-sm="30" flex-vsm="100">
+								<div class="element" flex-sm="30" flex-vsm="100">
 									<h4>Phone Number</h4>
 									<p>{{registration.contactLeaderPhoneNumber}}</p>
 								</div>
@@ -38,14 +38,14 @@
 		<md-card flex-md="90" flex-sm="90">
 			<md-card-content>
 				<md-toolbar><h2 class="md-toolbar-tools"><span>Estimated Participant counts</span></h2></md-toolbar>
-				<div layout="row" layout-align="center">
+				<div layout="row" layout-align="center" class="element-container">
 					<div layout="column">
 						<div layout="row">
-							<div class="form-redisplay">
+							<div class="element">
 								<h4>Estimated Youth</h4>
 								<p>{{registration.estimatedYouth}}</p>
 							</div>
-							<div class="form-redisplay">
+							<div class="element">
 								<h4>Estimated Leaders</h4>
 								<p>{{registration.estimatedLeaders}}</p>
 							</div>
