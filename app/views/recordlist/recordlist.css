@@ -12,7 +12,7 @@ table.recordlist tr:nth-child(odd) td {
 }
 
 @media print {
-	table.recordlist td:last-child, th:last-child {
+	table.recordlist td:last-child, table.recordlist th:last-child {
 		display: none;
 	}
 }
