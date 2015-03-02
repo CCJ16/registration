@@ -420,7 +420,7 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 						So(inv.To, ShouldEqual, "1st Testingway of Council rock (Pack A)")
 					})
 					Convey("With the single deposit item", func() {
-						So(inv.LineItems, ShouldResemble, []InvoiceItem{{"Preregistration deposit", 25000, 1}})
+						So(inv.LineItems, ShouldResemble, []InvoiceItem{{"Pre-registration deposit", 25000, 1}})
 					})
 				})
 				Convey("And refetching the record should keep the same contents", func() {
@@ -495,7 +495,7 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 			})
 		})
 
-		Convey("Inserting a group with pack name", func() {
+		Convey("Inserting a group without a pack name", func() {
 			rec := GroupPreRegistration{
 				GroupName:          "1st Testingway",
 				Council:            "Council rock",
@@ -514,7 +514,7 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 						So(inv.To, ShouldEqual, "1st Testingway of Council rock")
 					})
 					Convey("With the single deposit item", func() {
-						So(inv.LineItems, ShouldResemble, []InvoiceItem{{"Preregistration deposit", 25000, 1}})
+						So(inv.LineItems, ShouldResemble, []InvoiceItem{{"Pre-registration deposit", 25000, 1}})
 					})
 				})
 			})

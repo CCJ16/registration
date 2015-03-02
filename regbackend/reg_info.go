@@ -264,7 +264,7 @@ func (d *preRegDbBolt) CreateInvoiceIfNotExists(gpr *GroupPreRegistration) (inv 
 		}
 		inv = &Invoice{
 			To:        toLine,
-			LineItems: []InvoiceItem{{"Preregistration deposit", 25000, 1}},
+			LineItems: []InvoiceItem{{"Pre-registration deposit", 25000, 1}},
 		}
 		if err := d.invDb.NewInvoice(inv, tx); err != nil {
 			return err
