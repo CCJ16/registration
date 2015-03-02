@@ -85,7 +85,6 @@ module.exports = function (grunt) {
 					]
 				}]
 			},
-			server: ".tmp"
 		},
 
 		// Add vendor prefixed styles
@@ -243,21 +242,6 @@ module.exports = function (grunt) {
 			}
 		},
 
-		// Run some tasks in parallel to speed up the build process
-		concurrent: {
-			server: [
-				"copy:styles"
-			],
-			test: [
-				"copy:styles"
-			],
-			dist: [
-				"copy:styles",
-				"imagemin",
-				"svgmin"
-			]
-		},
-
 		// Test settings
 		karma: {
 			unit: {
@@ -268,16 +252,15 @@ module.exports = function (grunt) {
 	});
 
 	grunt.registerTask("test", [
-		"clean:server",
-		"concurrent:test",
-		"autoprefixer",
 		"karma"
 	]);
 
 	grunt.registerTask("build", [
 		"clean:dist",
 		"useminPrepare",
-		"concurrent:dist",
+		"copy:styles",
+		"imagemin",
+		"svgmin",
 		"autoprefixer",
 		"concat",
 		"ngAnnotate",
