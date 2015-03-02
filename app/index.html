@@ -17,6 +17,7 @@
 	<link rel="stylesheet" href="app/app.css">
 	<link rel="stylesheet" href="views/recordlist/recordlist.css">
 	<!-- endbuild -->
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Rock+Salt&text=CCJ'16" type="text/css">
 </head>
 <body layout="column">
 	<!--[if lt IE 9]>
@@ -24,7 +25,7 @@
 	<![endif]-->
 
 	<div flex layout="column" ng-controller="CtrlApp">
-		<md-toolbar><h1 class="md-toolbar-tools"><span>CCJ16 Pre-registration{{packDisplayName}}</span></h1></md-toolbar>
+		<md-toolbar><h1 class="md-toolbar-tools"><span><span class="title-text">CCJ'16</span> Pre-registration{{packDisplayName}}</span></h1></md-toolbar>
 		<div>
 			<md-content ng-view layout="column" flex></md-content>
 		</div>
@@ -35,6 +36,7 @@
 	<script src="bower_components/angular-aria/angular-aria.js"></script>
 	<script src="bower_components/angular-resource/angular-resource.js"></script>
 	<script src="bower_components/angular-route/angular-route.js"></script>
+	<script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
 	<script src="bower_components/angular-material/angular-material.js"></script>
 	<script src="app/app.js"></script>
 	<script src="app/common.js"></script>

@@ -12,7 +12,7 @@ describe("Initial registration process", function() {
 	describe("by registering", function() {
 		it("should render the registration form without user information in the main header", function() {
 			expect(element.all(by.css("h1")).first().getText()).
-				toBe("CCJ16 Pre-registration");
+				toBe("CCJ'16 Pre-registration");
 		});
 		it("should render the registration form in the view", function() {
 			expect(element.all(by.css("[ng-view] h2")).first().getText()).

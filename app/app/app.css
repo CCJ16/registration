@@ -1,5 +1,9 @@
 /* app css stylesheet */
 
+.title-text {
+	font-family: "Rock Salt", RobotoDraft, Roboto, 'Helvetica Neue', sans-serif;
+}
+
 .progress-dialog md-progress-circular {
 	margin: auto;
 }
