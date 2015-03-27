@@ -17,28 +17,15 @@ InvoicePage.prototype = Object.create({}, {
 		return element(by.css(".left.element p")).getText()
 	}},
 	items: { get: function() {
-		var items = []
-		var defer = protractor.promise.defer()
-		element.all(by.repeater("item in invoice.lineItems")).each(function(element) {
-			var item = {}
+		return element.all(by.repeater("item in invoice.lineItems")).map(function(element) {
 			var elements = element.all(by.css("td"))
-			elements.get(0).getText().then(function(text) {
-				item.description = text
-			})
-			elements.get(1).getText().then(function(text) {
-				item.count = text
-			})
-			elements.get(2).getText().then(function(text) {
-				item.unitPrice = text
-			})
-			elements.get(3).getText().then(function(text) {
-				item.total = text
-			})
-			items.push(item)
-		}).then(function() {
-			defer.fulfill(items)
+			return {
+				description: elements.get(0).getText(),
+				count: elements.get(1).getText(),
+				unitPrice: elements.get(2).getText(),
+				total: elements.get(3).getText(),
+			}
 		})
-		return defer.promise
 	}},
 	total: { get: function() {
 		return element(by.css("tr.total td.numeric")).getText()
