@@ -33,7 +33,7 @@ exports.config = {
 		return defer.promise;
 	},
 
-	framework: "jasmine",
+	framework: "jasmine2",
 
 	jasmineNodeOpts: {
 		defaultTimeoutInterval: 30000

@@ -39,7 +39,7 @@
     "karma-sauce-launcher": "^0.2.10",
     "load-grunt-tasks": "^3.1.0",
     "moment": "^2.9.0",
-    "protractor": "^1.6.0",
+    "protractor": "^2.0.0",
     "request": "^2.51.0",
     "time-grunt": "^1.0.0",
     "uglify-js": "^2.4.16"

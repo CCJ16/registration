@@ -13,8 +13,8 @@ exports.config = {
 	],
 
 	multiCapabilities: [
-		addCommon({browserName: "chrome", version: 39}),
-		addCommon({browserName: "firefox", version: 34}),
+		addCommon({browserName: "chrome", version: 41}),
+		addCommon({browserName: "firefox", version: 36}),
 		addCommon({browserName: "internet explorer", version: 11}),
 		addCommon({browserName: "internet explorer", version: 10}),
 		addCommon({browserName: "safari", version: "8", platform: "OS X 10.10"}),
@@ -40,7 +40,7 @@ exports.config = {
 		return defer.promise;
 	},
 
-	framework: "jasmine",
+	framework: "jasmine2",
 
 	jasmineNodeOpts: {
 		defaultTimeoutInterval: 60000
