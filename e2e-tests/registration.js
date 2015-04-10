@@ -35,7 +35,7 @@ describe("Registration information page", function() {
 				});
 				defer.promise.then(function(data) {
 					savedData = data;
-					browser.get("/registration/" + data.securityKey);
+					browser.setLocation("/registration/" + data.securityKey);
 				});
 				return defer.promise;
 			});
@@ -105,7 +105,7 @@ describe("Registration information page", function() {
 				});
 				defer.promise.then(function(data) {
 					savedData = data;
-					browser.get("/registration/" + data.securityKey);
+					browser.setLocation("/registration/" + data.securityKey);
 				});
 				return defer.promise;
 			});

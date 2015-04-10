@@ -2,7 +2,7 @@
 
 describe("Initial registration process", function() {
 	beforeEach(function() {
-		browser.get("/");
+		browser.setLocation("/");
 	});
 
 	it("should automatically redirect to /register when location hash/fragment is empty", function() {

@@ -5,7 +5,7 @@ var InvoicePage = function() {
 
 InvoicePage.prototype = Object.create({}, {
 	get: { value: function(securityKey) {
-		browser.get("/registration/" + securityKey + "/invoice")
+		browser.setLocation("/registration/" + securityKey + "/invoice")
 	}},
 	header: { get: function() {
 		return element(by.css("h2")).getText()
