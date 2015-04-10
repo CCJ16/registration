@@ -6,7 +6,7 @@
 			<div layout="row" class="element-container header">
 				<div class="element left" flex="65">
 					<h4>Date</h4>
-					<p>{{::invoice.created | date:"MMMM d, yyyy" }}</p>
+					<p>{{::invoice.created | moment:"MMMM D, YYYY": "America/Toronto" }}</p>
 				</div>
 				<div class="element right" flex="35">
 					<h4>Number</h4>

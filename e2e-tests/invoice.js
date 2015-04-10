@@ -2,6 +2,7 @@
 
 var page = new (require("./po/invoice"))()
 var moment = require("moment")
+require("moment-timezone")
 
 describe("Invoice information page", function() {
 	describe("with no pack information submitted", function() {
@@ -47,7 +48,7 @@ describe("Invoice information page", function() {
 			expect(page.id).toBe("1")
 		})
 		it("should have the date", function() {
-			expect(page.date).toBe(moment().format("MMMM D, YYYY"))
+			expect(page.date).toBe(moment().tz("America/Toronto").format("MMMM D, YYYY"))
 		})
 		it("should have an appropriate header", function() {
 			expect(page.header).toBe("Invoice for Test group of Test council")

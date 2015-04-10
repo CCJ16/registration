@@ -1,4 +1,4 @@
-angular.module("ccj16reg.view.invoice", ["ngRoute", "ngMaterial", "ccj16reg.invoice"])
+angular.module("ccj16reg.view.invoice", ["ngRoute", "ngMaterial", "ccj16reg.invoice", "ccj16reg.moment"])
 
 .config(["$routeProvider", function($routeProvider) {
 	"use strict";
