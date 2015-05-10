@@ -45,7 +45,7 @@ describe("Registration information page", function() {
 		});
 		it("should have the header include the council/group/pack name as appropriate", function() {
 			expect(element.all(by.css("h1")).first().getText()).
-				toBe("CCJ'16 Pre-registration - Test group of Test council");
+				toBe("CCJ'16 Registration - Test group of Test council");
 		});
 		it("should have the correct leader information", function() {
 			var leaderBlock = element.all(by.css("md-card-content")).get(0);
@@ -115,7 +115,7 @@ describe("Registration information page", function() {
 		});
 		it("should have the header include the council/group/pack name as appropriate", function() {
 			expect(element.all(by.css("h1")).first().getText()).
-				toBe("CCJ'16 Pre-registration - Test group of Test council (Test pack)");
+				toBe("CCJ'16 Registration - Test group of Test council (Test pack)");
 		});
 	});
 });
