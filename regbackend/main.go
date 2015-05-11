@@ -286,6 +286,8 @@ func setupStandardHandlers(globalRouter httpRouter, db *bolt.DB) (http.Handler, 
 	authHandler := NewAuthenticationHandler(apiR, boltStore)
 	NewGroupPreRegistrationHandler(apiR, gprdb, authHandler, ces)
 
+	NewSummaryHandler(apiR, gprdb)
+
 	apiR.Handle("/grabdb", &grabDb{db}).Headers("X-My-Auth-Token", key).Methods("GET").Queries("key", key)
 
 	globalRouter.Handle("/api/", &xsrfVerifierHandler{&xsrfTokenCreator{nil, boltStore}, apiR})

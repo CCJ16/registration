@@ -34,6 +34,19 @@
 	word-wrap: break-word;
 }
 
+.summary-container .element {
+	margin-left: 16px;
+	margin-right: 16px;
+}
+
+.summary-container .element h4 {
+	font-size: 1.2em;
+}
+
+.summary-container .element p {
+	font-size: 2em;
+}
+
 .element md-checkbox {
 	margin: auto;
 }
