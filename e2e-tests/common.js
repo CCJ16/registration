@@ -35,4 +35,5 @@ beforeEach(function () {
 		});
 		return defer.promise;
 	});
+	browser.setLocation("/");
 });
