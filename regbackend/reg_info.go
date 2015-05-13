@@ -401,6 +401,7 @@ func (h *PreRegHandler) GetInvoice(w http.ResponseWriter, r *http.Request) {
 		inv, err := h.db.CreateInvoiceIfNotExists(preReg)
 		if err != nil {
 			httpError(w, err)
+			return
 		}
 		buf := &bytes.Buffer{}
 		if err := json.NewEncoder(buf).Encode(inv); err != nil {
