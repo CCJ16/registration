@@ -8,7 +8,7 @@ angular.module("ccj16reg.view.emailConfirmation", ["ngRoute", "ngMaterial", "ccj
 	});
 })
 
-.controller("EmailConfirmationCtrl", function($scope, $location, $mdDialog, $routeParams, registration) {
+.controller("EmailConfirmationCtrl", function($scope, $location, $mdDialog, $routeParams, Registration) {
 	"use strict";
 	$scope.verifying = true;
 	$scope.error = false;
@@ -18,11 +18,11 @@ angular.module("ccj16reg.view.emailConfirmation", ["ngRoute", "ngMaterial", "ccj
 	if (!angular.isDefined($scope.email) || !angular.isDefined(token)) {
 		$location.path("/register")
 	} else {
-		registration.confirmEmail($scope.email, token).then(function() {
+		Registration.confirmEmail($scope.email, token).then(function() {
 			$scope.verifying = false;
 		}, function(resp) {
 			$scope.verifying = false;
-			$scope.error = resp.data;
+			$scope.error = resp.data.trim();
 		});
 	}
 });
