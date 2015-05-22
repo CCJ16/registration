@@ -9,6 +9,7 @@ exports.config = {
 		"e2e-tests/*.js"
 	],
 
+	directConnect: true,
 	capabilities: {
 		"browserName": "chrome"
 	},
