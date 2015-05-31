@@ -5,12 +5,12 @@ describe("ccj16reg.invoice module", function() {
 	beforeEach(module("ccj16reg.invoice"));
 
 	describe("invoice service", function() {
-		var $httpBackend, invoice;
+		var $httpBackend, Invoice;
 
-		beforeEach(inject(function($injector, _invoice_) {
+		beforeEach(inject(function($injector, _Invoice_) {
 			$httpBackend = $injector.get("$httpBackend");
 
-			invoice = _invoice_;
+			Invoice = _Invoice_;
 		}))
 
 		afterEach(function() {
@@ -20,7 +20,7 @@ describe("ccj16reg.invoice module", function() {
 		it("should properly request the preregistration invoice", function() {
 			$httpBackend.expectGET("/api/preregistration/MyKey/invoice").respond(200, {prop: "value"})
 
-			var newReg = invoice.getPreregistration({securityKey: "MyKey"});
+			var newReg = Invoice.getPreregistration({securityKey: "MyKey"});
 			$httpBackend.flush();
 			expect(newReg).toBeDefined();
 			expect(newReg.prop).toBe("value");

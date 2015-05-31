@@ -6,8 +6,8 @@ angular.module("ccj16reg.view.invoice", ["ngRoute", "ngMaterial", "ccj16reg.invo
 		templateUrl: "views/invoice/invoice.html",
 		controller: "InvoiceCtrl",
 		resolve: {
-			"invoiceData": function($route, invoice) {
-				return invoice.getPreregistration({securityKey: $route.current.params.securityKey}).$promise;
+			"invoiceData": function($route, Invoice) {
+				return Invoice.getPreregistration({securityKey: $route.current.params.securityKey}).$promise;
 			},
 		},
 	});
