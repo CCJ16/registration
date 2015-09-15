@@ -8,7 +8,7 @@ angular.module("ccj16reg.view.emailConfirmation", ["ngRoute", "ngMaterial", "ccj
 	});
 })
 
-.controller("EmailConfirmationCtrl", function($scope, $location, $mdDialog, $routeParams, Registration) {
+.controller("EmailConfirmationCtrl", function($scope, $location, $routeParams, Registration) {
 	"use strict";
 	$scope.verifying = true;
 	$scope.error = false;
