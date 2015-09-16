@@ -21,16 +21,14 @@
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Rock+Salt&text=CCJ'16" type="text/css">
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Sans+Mono&text=0123456789" type="text/css">
 </head>
-<body layout="column">
+<body layout="row">
 	<!--[if lt IE 9]>
 		<p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
 	<![endif]-->
 
 	<div flex layout="column" ng-controller="CtrlApp">
 		<md-toolbar><h1 class="md-toolbar-tools"><span><span class="title-text">CCJ'16</span> Registration{{packDisplayName}}</span></h1></md-toolbar>
-		<div>
-			<md-content ng-view layout="column" flex></md-content>
-		</div>
+		<md-content ng-view layout="column" flex></md-content>
 	</div>
     <!-- build:js(app) app/app.js -->
 	<script src="bower_components/angular/angular.js"></script>
