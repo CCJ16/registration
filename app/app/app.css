@@ -1,5 +1,10 @@
 /* app css stylesheet */
 
+/* Move the iframe Google uses to the left, otherwise a scroll bar appears.  I don't use iframes, so this doesn't affect me. */
+iframe {
+	left: 0px;
+}
+
 .title-text {
 	font-family: "Rock Salt", RobotoDraft, Roboto, 'Helvetica Neue', sans-serif;
 }
