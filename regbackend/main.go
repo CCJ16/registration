@@ -53,6 +53,7 @@ type configType struct {
 	General struct {
 		Domain              string `default:"invalid" usage:"Domain for use in emails, etc to link people to"`
 		Database            string `default:"records.bolt" usage:"Location to store the database"`
+		EnableWaitingList   bool   `default:"false" usage:"Set to put people into a waiting list instead of registering"`
 		AccessToken         string `usage:"Token to access database.  Generated randomly and printed if not set"`
 		StaticFilesLocation string `default:"../app" usage:"Location of static files for the site"`
 		Integration         bool   `default:"false" usage:"Set when running an integration binary for testing."`

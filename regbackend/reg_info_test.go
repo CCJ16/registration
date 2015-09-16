@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -270,10 +271,16 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 			So(db.Close(), ShouldBeNil)
 		})
 
+		config := &configType{}
+		Reset(func() {
+			config = &configType{}
+		})
+
 		dbOrm := boltorm.NewBoltDB(db)
 		invDb, err := NewInvoiceDb(dbOrm)
 		So(err, ShouldBeNil)
-		prdb, err := NewPreRegBoltDb(dbOrm, &configType{}, invDb)
+
+		prdb, err := NewPreRegBoltDb(dbOrm, config, invDb)
 		So(err, ShouldBeNil)
 
 		Convey("Inserting a group", func() {
@@ -289,6 +296,10 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 			Convey("Should set a security key", func() {
 				So(rec.SecurityKey, ShouldNotBeNil)
 				So(len(rec.SecurityKey), ShouldEqual, keyLength/3*4) // Length of key once converted to base64
+			})
+
+			Convey("Should be registered, not waiting", func() {
+				So(rec.IsOnWaitingList, ShouldBeFalse)
 			})
 
 			Convey("Should make it available in bolt", func() {
@@ -519,7 +530,44 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("And with the system in wait list mode", func() {
+			config.General.EnableWaitingList = true
+			Convey("Inserting a group", func() {
+				rec := GroupPreRegistration{
+					GroupName:          "1st Testingway",
+					Council:            "Council rock",
+					ContactLeaderEmail: "testemail@example.com",
+				}
+				So(prdb.CreateRecord(&rec), ShouldBeNil)
+
+				Convey("Should insert them set in the waiting list", func() {
+					So(rec.IsOnWaitingList, ShouldBeTrue)
+					Convey("And put them in the waiting list index", func() {
+						key, err := base64.URLEncoding.DecodeString(rec.SecurityKey)
+						So(err, ShouldBeNil)
+
+						So(db.View(func(tx *bolt.Tx) error {
+							bucket := tx.Bucket(BOLT_GROUPEWAITINGLISTBUCKET)
+							So(bucket.Stats().KeyN, ShouldEqual, 1)
+							So(bucket.Get([]byte{0, 0, 0, 0, 0, 0, 0, 1}), ShouldResemble, key)
+							return nil
+						}), ShouldBeNil)
+					})
+				})
+
+				Convey("Should not allow invoices", func() {
+					inv, err := prdb.CreateInvoiceIfNotExists(&rec)
+					So(inv, ShouldBeNil)
+					Convey("With the appropriate error", func() {
+						So(NoInvoiceOnWaitingList.Contains(err), ShouldBeTrue)
+					})
+				})
+			})
+		})
+
 		Convey("Fetching a missing record", func() {
+			So(config.General.EnableWaitingList, ShouldEqual, false)
 			fetchedRec, err := prdb.GetRecord("aaaa")
 			Convey("Should return a nil record", func() {
 				So(fetchedRec, ShouldBeNil)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"encoding/binary"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -61,6 +62,8 @@ type GroupPreRegistration struct {
 	EstimatedYouth   int `json:"estimatedYouth"`
 	EstimatedLeaders int `json:"estimatedLeaders"`
 
+	IsOnWaitingList bool `json:"isOnWaitingList"`
+
 	InvoiceID uint64 `json:"invoiceId"`
 }
 
@@ -115,18 +118,20 @@ type PreRegDb interface {
 }
 
 var (
-	DBError               = errors.NewClass("Database Error")
-	DBGenericError        = DBError.NewClass("Database Error", errhttp.OverrideErrorBody("Please retry or contact site administrator"))
-	RecordAlreadyPrepared = DBError.NewClass("Group preregistration is already prepared")
-	RecordDoesNotExist    = DBError.NewClass("Record does not exist")
-	GroupAlreadyCreated   = DBError.NewClass("Group already registered", errhttp.SetStatusCode(400))
-	BadVerificationToken  = DBError.NewClass("Bad email verification token")
+	DBError                = errors.NewClass("Database Error")
+	DBGenericError         = DBError.NewClass("Database Error", errhttp.OverrideErrorBody("Please retry or contact site administrator"))
+	RecordAlreadyPrepared  = DBError.NewClass("Group preregistration is already prepared")
+	RecordDoesNotExist     = DBError.NewClass("Record does not exist")
+	GroupAlreadyCreated    = DBError.NewClass("Group already registered", errhttp.SetStatusCode(400))
+	BadVerificationToken   = DBError.NewClass("Bad email verification token")
+	NoInvoiceOnWaitingList = DBError.NewClass("No payments are collected on the waiting list", errhttp.SetStatusCode(400))
 )
 
 var (
-	BOLT_GROUPBUCKET         = []byte("BUCKET_GROUP")
-	BOLT_GROUPNAMEMAPBUCKET  = []byte("BUCKET_GROUPNAMEMAP")
-	BOLT_GROUPEMAILMAPBUCKET = []byte("BUCKET_GROUPEMAILMAP")
+	BOLT_GROUPBUCKET             = []byte("BUCKET_GROUP")
+	BOLT_GROUPNAMEMAPBUCKET      = []byte("BUCKET_GROUPNAMEMAP")
+	BOLT_GROUPEMAILMAPBUCKET     = []byte("BUCKET_GROUPEMAILMAP")
+	BOLT_GROUPEWAITINGLISTBUCKET = []byte("BUCKET_GROUPEWAITINGLIST")
 )
 
 type preRegDbBolt struct {
@@ -151,6 +156,8 @@ func (d *preRegDbBolt) CreateRecord(in *GroupPreRegistration) error {
 	if err := in.PrepareForInsert(); err != nil {
 		return err
 	}
+	in.IsOnWaitingList = d.config.General.EnableWaitingList
+
 	err := d.db.Update(func(tx boltorm.Tx) error {
 		key := in.Key()
 		if err := tx.Insert(BOLT_GROUPBUCKET, key, in); err != nil {
@@ -168,6 +175,19 @@ func (d *preRegDbBolt) CreateRecord(in *GroupPreRegistration) error {
 				return err
 			}
 		}
+
+		if in.IsOnWaitingList {
+			waitingListPos, err := tx.NextSequenceForBucket(BOLT_INVOICEBUCKET)
+			if err != nil {
+				return err
+			}
+			var waitingListPosBytes [8]byte
+			binary.BigEndian.PutUint64(waitingListPosBytes[:], waitingListPos)
+			if err := tx.AddIndex(BOLT_GROUPEWAITINGLISTBUCKET, waitingListPosBytes[:], key); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 	if boltorm.ErrKeyAlreadyExists.Contains(err) {
@@ -250,6 +270,10 @@ func (d *preRegDbBolt) CreateInvoiceIfNotExists(gpr *GroupPreRegistration) (inv 
 			return err
 		}
 
+		if rec.IsOnWaitingList {
+			return NoInvoiceOnWaitingList.New("You are currently on the waiting list")
+		}
+
 		if rec.InvoiceID != 0 {
 			if inv, err = d.invDb.GetInvoice(rec.InvoiceID, tx); err != nil {
 				return err
@@ -287,6 +311,9 @@ func (d *preRegDbBolt) init() error {
 			return err
 		}
 		if err := tx.CreateBucketIfNotExists(BOLT_GROUPEMAILMAPBUCKET); err != nil {
+			return err
+		}
+		if err := tx.CreateBucketIfNotExists(BOLT_GROUPEWAITINGLISTBUCKET); err != nil {
 			return err
 		}
 		return nil
