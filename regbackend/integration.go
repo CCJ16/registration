@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net"
@@ -91,25 +92,33 @@ func main() {
 }
 
 var conTrackIdle map[net.Conn]bool = make(map[net.Conn]bool)
-var cTIM sync.Mutex
+var cTIM sync.RWMutex
 
 func ConnectionAccounting(c net.Conn, state http.ConnState) {
-	cTIM.Lock()
-	defer cTIM.Unlock()
 	switch state {
 	case http.StateNew:
+		cTIM.Lock()
+		defer cTIM.Unlock()
 		conTrackIdle[c] = true
 	case http.StateActive:
+		cTIM.Lock()
+		defer cTIM.Unlock()
 		wg.Add(1)
 		delete(conTrackIdle, c)
 	case http.StateClosed:
+		cTIM.RLock()
 		if !conTrackIdle[c] {
 			wg.Done()
 		}
+		cTIM.RUnlock()
+		cTIM.Lock()
+		defer cTIM.Unlock()
 		delete(conTrackIdle, c)
 	case http.StateIdle:
-		conTrackIdle[c] = true
 		wg.Done()
+		cTIM.Lock()
+		defer cTIM.Unlock()
+		conTrackIdle[c] = true
 	}
 }
 
@@ -180,6 +189,41 @@ func (d *dbWiper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type configHandler struct {
+	config *configType
+}
+
+func (c *configHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// This drains the connection pool 
+	cTIM.RLock()
+	defer cTIM.RUnlock()
+	wg.Add(-1)
+	wg.Wait()
+	wg.Add(1)
+
+	if r.Method == "DELETE" {
+		*c.config = *config
+		w.WriteHeader(http.StatusOK)
+	} else if r.Method == "GET" {
+		if data, err := json.Marshal(c.config); err != nil {
+			log.Print("Failed config object encode: ", err)
+			httpError(w, err)
+		} else {
+			w.WriteHeader(http.StatusOK)
+			if n, err := w.Write(data); err != nil || n != len(data) {
+				log.Printf("Failed to write entire config object, got error %s, wrote %v", err, n)
+			}
+		}
+	} else if r.Method == "POST" {
+		if err := json.NewDecoder(r.Body).Decode(c.config); err != nil {
+			httpError(w, err)
+			log.Print("Failed config object decode: ", err)
+		} else {
+			w.WriteHeader(http.StatusOK)
+		}
+	}
+}
+
 func setupNewHandlers() http.Handler {
 	file, err := ioutil.TempFile("", "records")
 	if err != nil {
@@ -197,7 +241,11 @@ func setupNewHandlers() http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("/integration/wipe_database", &dbWiper{db})
 	mux.HandleFunc("/integration/", http.NotFound)
-	newHandler, quitC, doneC, err := setupStandardHandlers(mux, config, db)
+
+	myConfig := *config
+	mux.Handle("/integration/config", &configHandler{&myConfig})
+
+	newHandler, quitC, doneC, err := setupStandardHandlers(mux, &myConfig, db)
 	if err != nil {
 		log.Fatalf("Failed to setup new standard handlers: %s", err)
 	}
