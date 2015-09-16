@@ -27,8 +27,10 @@ func (sh *SummaryHandler) GetPack(w http.ResponseWriter, r *http.Request) {
 
 	output := PackSummaryOutput{}
 	for i := 0; i < len(recs); i++ {
-		output.YouthCount += recs[i].EstimatedYouth
-		output.LeaderCount += recs[i].EstimatedLeaders
+		if !recs[i].IsOnWaitingList {
+			output.YouthCount += recs[i].EstimatedYouth
+			output.LeaderCount += recs[i].EstimatedLeaders
+		}
 	}
 
 	buf := &bytes.Buffer{}

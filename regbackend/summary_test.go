@@ -18,7 +18,8 @@ func TestSummaryPackEndPoint(t *testing.T) {
 		db := boltorm.NewMemoryDB()
 		invDb, err := NewInvoiceDb(db)
 		So(err, ShouldBeNil)
-		prdb, err := NewPreRegBoltDb(db, &configType{}, invDb)
+		config := &configType{}
+		prdb, err := NewPreRegBoltDb(db, config, invDb)
 		So(err, ShouldBeNil)
 		router := mux.NewRouter()
 		sh := NewSummaryHandler(router, prdb)
@@ -49,7 +50,7 @@ func TestSummaryPackEndPoint(t *testing.T) {
 			})
 		})
 
-		Convey("With a filled in database", func() {
+		Convey("With a filled in database (with people on a waiting list)", func() {
 			rec := GroupPreRegistration{
 				PackName:           "Pack A",
 				GroupName:          "Test Group",
@@ -58,16 +59,28 @@ func TestSummaryPackEndPoint(t *testing.T) {
 				EstimatedYouth:     5,
 				EstimatedLeaders:   3,
 			}
-			prdb.CreateRecord(&rec)
+			So(prdb.CreateRecord(&rec), ShouldBeNil)
 			rec = GroupPreRegistration{
 				PackName:           "Pack B",
 				GroupName:          "Test Group",
 				Council:            "1st Testingway",
-				ContactLeaderEmail: "testemail@example.test",
+				ContactLeaderEmail: "testemail1@example.test",
 				EstimatedYouth:     12,
 				EstimatedLeaders:   6,
 			}
-			prdb.CreateRecord(&rec)
+			So(prdb.CreateRecord(&rec), ShouldBeNil)
+			rec = GroupPreRegistration{
+				PackName:           "Wait pack",
+				GroupName:          "Test Group",
+				Council:            "1st Testingway",
+				ContactLeaderEmail: "testemail2@example.test",
+				EstimatedYouth:     8,
+				EstimatedLeaders:   4,
+				IsOnWaitingList:    true,
+			}
+			config.General.EnableWaitingList = true
+			So(prdb.CreateRecord(&rec), ShouldBeNil)
+			config.General.EnableWaitingList = false
 			Convey("The api endpoint should give a 200 output", func() {
 				r, err := http.NewRequest("GET", "http://localhost:8080/summary/pack", nil)
 				So(err, ShouldBeNil)
