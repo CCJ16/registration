@@ -130,14 +130,16 @@ var (
 )
 
 type preRegDbBolt struct {
-	db    boltorm.DB
-	invDb InvoiceDb
+	db     boltorm.DB
+	config *configType
+	invDb  InvoiceDb
 }
 
-func NewPreRegBoltDb(db boltorm.DB, invDb InvoiceDb) (PreRegDb, error) {
+func NewPreRegBoltDb(db boltorm.DB, config *configType, invDb InvoiceDb) (PreRegDb, error) {
 	prdb := &preRegDbBolt{
-		db:    db,
-		invDb: invDb,
+		db:     db,
+		config: config,
+		invDb:  invDb,
 	}
 	if err := prdb.init(); err != nil {
 		return nil, err

@@ -17,6 +17,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/spacemonkeygo/errors"
 	"github.com/spacemonkeygo/errors/errhttp"
+	"github.com/spacemonkeygo/flagfile"
 	goflagutils "github.com/spacemonkeygo/flagfile/utils"
 	"github.com/yosssi/boltstore/reaper"
 	"github.com/yosssi/boltstore/store"
@@ -31,24 +32,32 @@ const (
 	globalSessionName = "SESSION"
 )
 
-var httpConfig struct {
-	Listen string `default:":8080" usage:"Address for server to listen on"`
-}
+type configType struct {
+	Http struct {
+		Listen string `default:":8080" usage:"Address for server to listen on"`
+	}
 
-var emailConfig struct {
-	FromAddress  string `default:"no-reply@invalid" usage:"From address for use in emails"`
-	FromName     string `usage:"From name for use in emails"`
-	ContactEmail string `default:"info@invalid" "usage:"Contact email address for use in emails"`
-	Server       string `default:"localhost:25" usage:"Server to use for sending messages"`
-}
+	Email struct {
+		FromAddress  string `default:"no-reply@invalid" usage:"From address for use in emails"`
+		FromName     string `usage:"From name for use in emails"`
+		ContactEmail string `default:"info@invalid" "usage:"Contact email address for use in emails"`
+		Server       string `default:"localhost:25" usage:"Server to use for sending messages"`
+	}
 
-var generalConfig struct {
-	Domain              string `default:"invalid" usage:"Domain for use in emails, etc to link people to"`
-	Database            string `default:"records.bolt" usage:"Location to store the database"`
-	AccessToken         string `usage:"Token to access database.  Generated randomly and printed if not set"`
-	StaticFilesLocation string `default:"../app" usage:"Location of static files for the site"`
-	Integration         bool   `default:"false" usage:"Set when running an integration binary for testing."`
-	Develop             bool   `default:"false" usage:"Set when running a binary for development."`
+	Auth struct {
+		ClientID      string            `default:"" usage:"Client id for use with Google OAuth"`
+		ClientSecret  string            `default:"" usage:"Client secret for use with Google OAuth"`
+		AllowedEmails stringSliceConfig `usage:"Allowed email addresses, comma separated."`
+	}
+
+	General struct {
+		Domain              string `default:"invalid" usage:"Domain for use in emails, etc to link people to"`
+		Database            string `default:"records.bolt" usage:"Location to store the database"`
+		AccessToken         string `usage:"Token to access database.  Generated randomly and printed if not set"`
+		StaticFilesLocation string `default:"../app" usage:"Location of static files for the site"`
+		Integration         bool   `default:"false" usage:"Set when running an integration binary for testing."`
+		Develop             bool   `default:"false" usage:"Set when running a binary for development."`
+	}
 }
 
 type stringSliceConfig []string
@@ -62,17 +71,15 @@ func (s stringSliceConfig) String() string {
 	return fmt.Sprintf("\"%s\"", strings.Join(s, ","))
 }
 
-var authConfig struct {
-	ClientID      string            `default:"" usage:"Client id for use with Google OAuth"`
-	ClientSecret  string            `default:"" usage:"Client secret for use with Google OAuth"`
-	AllowedEmails stringSliceConfig `usage:"Allowed email addresses, comma separated."`
-}
+func getConfig() *configType {
+	config := &configType{}
+	goflagutils.Setup("http", &config.Http)
+	goflagutils.Setup("email", &config.Email)
+	goflagutils.Setup("auth", &config.Auth)
+	goflagutils.Setup("", &config.General)
 
-func init() {
-	goflagutils.Setup("http", &httpConfig)
-	goflagutils.Setup("email", &emailConfig)
-	goflagutils.Setup("auth", &authConfig)
-	goflagutils.Setup("", &generalConfig)
+	flagfile.Load()
+	return config
 }
 
 type requestLogger struct {
@@ -165,6 +172,7 @@ func httpError(w http.ResponseWriter, err error) {
 
 type xsrfTokenCreator struct {
 	Handler http.Handler
+	config  *configType
 	store   sessions.Store
 }
 
@@ -189,7 +197,7 @@ func (h *xsrfTokenCreator) setXsrfToken(w http.ResponseWriter, r *http.Request) 
 		Value:    key,
 		HttpOnly: false,
 		Path:     "/",
-		Secure:   !(generalConfig.Integration || generalConfig.Develop),
+		Secure:   !(h.config.General.Integration || h.config.General.Develop),
 		Expires:  expires,
 		MaxAge:   maxAge,
 	}
@@ -242,8 +250,8 @@ type httpRouter interface {
 	ServeHTTP(http.ResponseWriter, *http.Request)
 }
 
-func setupStandardHandlers(globalRouter httpRouter, db *bolt.DB) (http.Handler, chan<- struct{}, <-chan struct{}, error) {
-	key := generalConfig.AccessToken
+func setupStandardHandlers(globalRouter httpRouter, config *configType, db *bolt.DB) (http.Handler, chan<- struct{}, <-chan struct{}, error) {
+	key := config.General.AccessToken
 	if key == "" {
 		var random [32]byte
 		if _, err := rand.Read(random[:]); err != nil {
@@ -260,7 +268,7 @@ func setupStandardHandlers(globalRouter httpRouter, db *bolt.DB) (http.Handler, 
 		SessionOptions: sessions.Options{
 			Path:     "/",
 			MaxAge:   60 * 60 * 24 * 30,
-			Secure:   !(generalConfig.Integration || generalConfig.Develop),
+			Secure:   !(config.General.Integration || config.General.Develop),
 			HttpOnly: true,
 		},
 		DBOptions: store.Options{
@@ -276,31 +284,31 @@ func setupStandardHandlers(globalRouter httpRouter, db *bolt.DB) (http.Handler, 
 		return nil, nil, nil, SetupErrors.New("Failed to get invoice database started")
 	}
 
-	gprdb, err := NewPreRegBoltDb(ormDb, invDb)
+	gprdb, err := NewPreRegBoltDb(ormDb, config, invDb)
 	if err != nil {
 		return nil, nil, nil, SetupErrors.New("Failed to get group preregistration database started", err)
 	}
 
-	ces := NewConfirmationEmailService(generalConfig.Domain, emailConfig.FromAddress, emailConfig.FromName, emailConfig.ContactEmail, NewLocalMailder(emailConfig.Server), gprdb)
+	ces := NewConfirmationEmailService(config.General.Domain, config.Email.FromAddress, config.Email.FromName, config.Email.ContactEmail, NewLocalMailder(config.Email.Server), gprdb)
 
-	authHandler := NewAuthenticationHandler(apiR, boltStore)
+	authHandler := NewAuthenticationHandler(apiR, config, boltStore)
 	NewGroupPreRegistrationHandler(apiR, gprdb, authHandler, ces)
 
 	NewSummaryHandler(apiR, gprdb)
 
 	apiR.Handle("/grabdb", &grabDb{db}).Headers("X-My-Auth-Token", key).Methods("GET").Queries("key", key)
 
-	globalRouter.Handle("/api/", &xsrfVerifierHandler{&xsrfTokenCreator{nil, boltStore}, apiR})
-	otherFiles := http.FileServer(http.Dir(generalConfig.StaticFilesLocation))
+	globalRouter.Handle("/api/", &xsrfVerifierHandler{&xsrfTokenCreator{nil, config, boltStore}, apiR})
+	otherFiles := http.FileServer(http.Dir(config.General.StaticFilesLocation))
 	globalRouter.Handle("/app/", otherFiles)
 	globalRouter.Handle("/components/", otherFiles)
 	globalRouter.Handle("/views/", otherFiles)
 	globalRouter.Handle("/images/", otherFiles)
 	globalRouter.Handle("/bower_components/", otherFiles)
-	indexLocation := generalConfig.StaticFilesLocation + "/index.html"
+	indexLocation := config.General.StaticFilesLocation + "/index.html"
 	globalRouter.Handle("/", &xsrfTokenCreator{http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, indexLocation)
-	}), boltStore})
+	}), config, boltStore})
 	quitC, doneC := reaper.Run(db, reaper.Options{BucketName: []byte("SESSIONS_BUCKET")})
 	return &sessionSaver{globalRouter}, quitC, doneC, nil
 }

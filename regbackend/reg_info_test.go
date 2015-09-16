@@ -39,7 +39,7 @@ func TestPreRegCreateRequest(t *testing.T) {
 		db := boltorm.NewMemoryDB()
 		invDb, err := NewInvoiceDb(db)
 		So(err, ShouldBeNil)
-		prdb, err := NewPreRegBoltDb(db, invDb)
+		prdb, err := NewPreRegBoltDb(db, &configType{}, invDb)
 		So(err, ShouldBeNil)
 		router := mux.NewRouter()
 		testEmailSender := &testEmailSender{}
@@ -273,7 +273,7 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 		dbOrm := boltorm.NewBoltDB(db)
 		invDb, err := NewInvoiceDb(dbOrm)
 		So(err, ShouldBeNil)
-		prdb, err := NewPreRegBoltDb(dbOrm, invDb)
+		prdb, err := NewPreRegBoltDb(dbOrm, &configType{}, invDb)
 		So(err, ShouldBeNil)
 
 		Convey("Inserting a group", func() {

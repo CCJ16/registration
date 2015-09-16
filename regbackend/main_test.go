@@ -47,7 +47,7 @@ func TestXsrfSetting(t *testing.T) {
 		So(err, ShouldBeNil)
 		w := httptest.NewRecorder()
 		store := sessions.NewCookieStore()
-		(&xsrfTokenCreator{store: store, Handler: testHttpHandler{}}).ServeHTTP(w, r)
+		(&xsrfTokenCreator{store: store, config: &configType{}, Handler: testHttpHandler{}}).ServeHTTP(w, r)
 		w.Flush()
 		So(w.Code, ShouldEqual, 299)
 		Reset(func() {
@@ -99,7 +99,7 @@ func TestXsrfVerifications(t *testing.T) {
 				So(err, ShouldBeNil)
 				session.Values[xsrfSessionToken] = sessionValue
 				w := httptest.NewRecorder()
-				xsrfHandler := &xsrfVerifierHandler{&xsrfTokenCreator{nil, store}, testHttpHandler{}}
+				xsrfHandler := &xsrfVerifierHandler{&xsrfTokenCreator{nil, &configType{}, store}, testHttpHandler{}}
 				xsrfHandler.ServeHTTP(w, r)
 				w.Flush()
 				if succeed {

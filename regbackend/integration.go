@@ -15,7 +15,6 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/handlers"
-	"github.com/spacemonkeygo/flagfile"
 	"github.com/yosssi/boltstore/reaper"
 )
 
@@ -32,13 +31,14 @@ type cleanupInfo struct {
 var dbs []*cleanupInfo
 var dbsLock sync.Mutex
 var wg sync.WaitGroup
+var config *configType
 
 func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Kill, os.Interrupt)
 
-	flagfile.Load()
-	if generalConfig.Integration == false {
+	config = getConfig()
+	if config.General.Integration == false {
 		log.Panic("Attempted to run in normal mode in an integration binary!")
 	}
 	mux := http.NewServeMux()
@@ -52,7 +52,7 @@ func main() {
 		w.Write([]byte("true"))
 	})
 
-	l, err := net.Listen("tcp", httpConfig.Listen)
+	l, err := net.Listen("tcp", config.Http.Listen)
 	if err != nil {
 		log.Fatalf("Failed to open tcp port, err %s", err)
 	}
@@ -197,7 +197,7 @@ func setupNewHandlers() http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("/integration/wipe_database", &dbWiper{db})
 	mux.HandleFunc("/integration/", http.NotFound)
-	newHandler, quitC, doneC, err := setupStandardHandlers(mux, db)
+	newHandler, quitC, doneC, err := setupStandardHandlers(mux, config, db)
 	if err != nil {
 		log.Fatalf("Failed to setup new standard handlers: %s", err)
 	}

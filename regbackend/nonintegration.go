@@ -8,25 +8,25 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/handlers"
-	"github.com/spacemonkeygo/flagfile"
 )
 
 func main() {
-	flagfile.Load()
-	if generalConfig.Integration == true {
+	config := getConfig()
+
+	if config.General.Integration == true {
 		log.Panic("Attempted to run in integration mode in a non-final binary!")
 	}
-	if generalConfig.Develop != develop {
+	if config.General.Develop != develop {
 		log.Panic("Mismatch in development vs production build and configuration!")
 	}
-	db, err := bolt.Open(generalConfig.Database, 0600, &bolt.Options{Timeout: 1})
+	db, err := bolt.Open(config.General.Database, 0600, &bolt.Options{Timeout: 1})
 	if err != nil {
 		log.Fatalf("Failed to open bolt database, err: %s", err)
 	}
 	mux := http.NewServeMux()
-	realMux, _, _, err := setupStandardHandlers(mux, db)
+	realMux, _, _, err := setupStandardHandlers(mux, config, db)
 	if err != nil {
 		log.Fatalf("Failed to setup basic routing, err: %s", err)
 	}
-	panic(http.ListenAndServe(httpConfig.Listen, handlers.CompressHandler(&requestLogger{realMux})))
+	panic(http.ListenAndServe(config.Http.Listen, handlers.CompressHandler(&requestLogger{realMux})))
 }

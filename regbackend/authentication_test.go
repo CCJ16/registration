@@ -19,7 +19,7 @@ func TestVerifySession(t *testing.T) {
 		sess, err := sessions.GetRegistry(r).Get(store, globalSessionName)
 		So(err, ShouldBeNil)
 		So(sess, ShouldNotBeNil)
-		aH := AuthenticationHandler{store}
+		aH := AuthenticationHandler{&configType{}, store}
 		helper := func(output string) {
 			w := httptest.NewRecorder()
 			aH.VerifySession(w, r)

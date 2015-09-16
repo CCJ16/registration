@@ -18,7 +18,7 @@ func TestSummaryPackEndPoint(t *testing.T) {
 		db := boltorm.NewMemoryDB()
 		invDb, err := NewInvoiceDb(db)
 		So(err, ShouldBeNil)
-		prdb, err := NewPreRegBoltDb(db, invDb)
+		prdb, err := NewPreRegBoltDb(db, &configType{}, invDb)
 		So(err, ShouldBeNil)
 		router := mux.NewRouter()
 		sh := NewSummaryHandler(router, prdb)

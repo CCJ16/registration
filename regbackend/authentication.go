@@ -24,7 +24,8 @@ func init() {
 }
 
 type AuthenticationHandler struct {
-	store sessions.Store
+	config *configType
+	store  sessions.Store
 }
 
 func (a *AuthenticationHandler) sessionIsLoggedin(r *http.Request) bool {
@@ -54,8 +55,8 @@ func (a *AuthenticationHandler) VerifyGoogleToken(w http.ResponseWriter, r *http
 		code = string(codeB)
 	}
 	conf := &oauth2.Config{
-		ClientID:     authConfig.ClientID,
-		ClientSecret: authConfig.ClientSecret,
+		ClientID:     a.config.Auth.ClientID,
+		ClientSecret: a.config.Auth.ClientSecret,
 		RedirectURL:  "postmessage",
 		Endpoint:     google.Endpoint,
 	}
@@ -85,7 +86,7 @@ func (a *AuthenticationHandler) VerifyGoogleToken(w http.ResponseWriter, r *http
 		}
 	}
 	var validEmail bool
-	for _, allowedEmail := range authConfig.AllowedEmails {
+	for _, allowedEmail := range a.config.Auth.AllowedEmails {
 		if allowedEmail == primaryEmail {
 			validEmail = true
 			break
@@ -117,9 +118,10 @@ func (a *AuthenticationHandler) AdminFunc(h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func NewAuthenticationHandler(r *mux.Router, store sessions.Store) *AuthenticationHandler {
+func NewAuthenticationHandler(r *mux.Router, config *configType, store sessions.Store) *AuthenticationHandler {
 	authHandler := &AuthenticationHandler{
-		store: store,
+		store:  store,
+		config: config,
 	}
 
 	r.HandleFunc("/authentication/isLoggedIn", authHandler.VerifySession).Methods("GET")
