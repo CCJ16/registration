@@ -35,5 +35,23 @@ beforeEach(function () {
 		});
 		return defer.promise;
 	});
+	flow.execute(function() {
+		var defer = protractor.promise.defer();
+		browser.executeAsyncScript(function(baseUrl, callback) {
+			var $http = angular.injector(["ccj16reg"]).get("$http");
+			$http({ url: baseUrl + "/integration/config", method: "DELETE" }).then(function() {
+				callback(true)
+			}, function () {
+				callback(false)
+			});
+		}, browser.baseUrl).then(function(success) {
+			if (success) {
+				defer.fulfill();
+			} else {
+				defer.reject("Failed to clear database");
+			}
+		});
+		return defer.promise;
+	});
 	browser.setLocation("/");
 });
