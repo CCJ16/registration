@@ -31,7 +31,7 @@ angular.module("ccj16reg", [
 			"hue-1": "500",
 		})
 		.backgroundPalette("grey", {
-			"default": "100",
+			"default": "50",
 		});
 })
 .controller("CtrlApp", function($scope) {
