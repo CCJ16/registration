@@ -272,10 +272,6 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 		})
 
 		config := &configType{}
-		Reset(func() {
-			config = &configType{}
-		})
-
 		dbOrm := boltorm.NewBoltDB(db)
 		invDb, err := NewInvoiceDb(dbOrm)
 		So(err, ShouldBeNil)
