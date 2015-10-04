@@ -16,7 +16,7 @@ describe("Initial registration process", function() {
 		});
 		it("should render the registration form in the view", function() {
 			expect(element.all(by.css("[ng-view] h2")).first().getText()).
-				toBe("Group pre-registration");
+				toBe("CCJ'16 Wait List");
 		});
 		it("should have the submit button disabled by default", function() {
 			var button = element(by.css("button.md-button.md-primary"));
