@@ -67,6 +67,11 @@ type GroupPreRegistration struct {
 	InvoiceID uint64 `json:"invoiceId"`
 }
 
+type GroupPreRegistrationInWaitingList struct {
+	*GroupPreRegistration
+	WaitingListPos int `json:"waitingListPos"`
+}
+
 func (gpr GroupPreRegistration) Key() []byte {
 	key, err := base64.URLEncoding.DecodeString(gpr.SecurityKey)
 	if err != nil {
@@ -111,6 +116,7 @@ type PreRegDb interface {
 	CreateRecord(rec *GroupPreRegistration) error
 	GetRecord(securityKey string) (rec *GroupPreRegistration, err error)
 	GetAll() (recs []*GroupPreRegistration, err error)
+	GetWaitingList() (recs []*GroupPreRegistrationInWaitingList, err error)
 
 	NoteConfirmationEmailSent(rec *GroupPreRegistration) error
 	VerifyEmail(email, token string) error
@@ -220,6 +226,23 @@ func (d *preRegDbBolt) GetAll() (recs []*GroupPreRegistration, err error) {
 			return err
 		} else {
 			recs = res.([]*GroupPreRegistration)
+		}
+		return nil
+	})
+}
+
+func (d *preRegDbBolt) GetWaitingList() (recs []*GroupPreRegistrationInWaitingList, err error) {
+	return recs, d.db.View(func(tx boltorm.Tx) error {
+		if res, err := tx.GetAllByIndex(BOLT_GROUPEWAITINGLISTBUCKET, BOLT_GROUPBUCKET, &GroupPreRegistration{}); err != nil {
+			return err
+		} else {
+			rawRecs := res.([]*GroupPreRegistration)
+			for i, rec := range rawRecs {
+				recs = append(recs, &GroupPreRegistrationInWaitingList{
+					rec,
+					i + 1,
+				})
+			}
 		}
 		return nil
 	})
@@ -384,19 +407,55 @@ func (h *PreRegHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PreRegHandler) GetList(w http.ResponseWriter, r *http.Request) {
-	recs, err := h.db.GetAll()
-	if err != nil {
-		http.Error(w, "Failed to get records", 500)
-	} else {
-		buf := &bytes.Buffer{}
-		if err := json.NewEncoder(buf).Encode(recs); err != nil {
+	const (
+		allRegs        = "all"
+		registeredRegs = "registered"
+		waitingRegs    = "waiting"
+	)
+
+	selectValue := r.URL.Query().Get("select")
+	// Only all/registered/waiting are valid selections, if that isn't passed assume all.
+	if selectValue != allRegs && selectValue != registeredRegs && selectValue != waitingRegs {
+		selectValue = allRegs
+	}
+
+	var output interface{}
+	if selectValue == allRegs || selectValue == registeredRegs {
+		recs, err := h.db.GetAll()
+		if err != nil {
 			http.Error(w, "Failed to get records", 500)
 			return
+		} else {
+			if selectValue == "all" {
+				output = recs
+			} else {
+				filteredRecs := []*GroupPreRegistration{}
+				for _, rec := range recs {
+					if !rec.IsOnWaitingList {
+						filteredRecs = append(filteredRecs, rec)
+					}
+				}
+				output = filteredRecs
+			}
 		}
-		w.Header()["Content-Type"] = []string{"application/json"}
-		w.WriteHeader(http.StatusOK)
-		io.Copy(w, buf)
+	} else {
+		recs, err := h.db.GetWaitingList()
+		if err != nil {
+			http.Error(w, "Failed to get records", 500)
+			return
+		} else {
+			output = recs
+		}
 	}
+
+	buf := &bytes.Buffer{}
+	if err := json.NewEncoder(buf).Encode(output); err != nil {
+		http.Error(w, "Failed to get records", 500)
+		return
+	}
+	w.Header()["Content-Type"] = []string{"application/json"}
+	w.WriteHeader(http.StatusOK)
+	io.Copy(w, buf)
 }
 
 func (h *PreRegHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {

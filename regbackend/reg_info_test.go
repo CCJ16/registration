@@ -256,6 +256,224 @@ func TestPreRegCreateRequest(t *testing.T) {
 	})
 }
 
+func CompareList(actual []*GroupPreRegistration, expected map[string]*GroupPreRegistration) {
+	So(len(expected), ShouldEqual, len(actual))
+	for _, gpr := range actual {
+		expectedValue := expected[gpr.SecurityKey]
+		So(gpr.EmailApprovalGivenAt, ShouldHappenWithin, time.Second, expectedValue.EmailApprovalGivenAt)
+		gpr.EmailApprovalGivenAt = expectedValue.EmailApprovalGivenAt
+		So(gpr.ValidatedOn, ShouldHappenWithin, time.Second, expectedValue.ValidatedOn)
+		gpr.ValidatedOn = expectedValue.ValidatedOn
+		gpr.ValidationToken = expectedValue.ValidationToken
+		gpr.EmailConfirmationSent = expectedValue.EmailConfirmationSent
+
+		So(gpr, ShouldResemble, expectedValue)
+
+		delete(expected, gpr.SecurityKey)
+	}
+}
+
+func TestPreRegListHandler(t *testing.T) {
+	Convey("Starting with a valid handler with 2 groups registered and 3 waiting", t, func() {
+		db := boltorm.NewMemoryDB()
+		invDb, err := NewInvoiceDb(db)
+		So(err, ShouldBeNil)
+		config := &configType{}
+		prdb, err := NewPreRegBoltDb(db, config, invDb)
+		So(err, ShouldBeNil)
+		router := mux.NewRouter()
+		testEmailSender := &testEmailSender{}
+		ces := NewConfirmationEmailService("examplesite.com", "no-reply@examplesender.com", "no-reply", "info@infoexample.com", testEmailSender, prdb)
+		prh := NewGroupPreRegistrationHandler(router, prdb, nil, ces)
+
+		reg1 := &GroupPreRegistration{
+			PackName:           "Pack A",
+			GroupName:          "1st Testingway",
+			Council:            "Council rock",
+			ContactLeaderEmail: "testemail@example.com",
+		}
+		So(prdb.CreateRecord(reg1), ShouldBeNil)
+
+		reg2 := &GroupPreRegistration{
+			PackName:           "Pack B",
+			GroupName:          "1st Testingway",
+			Council:            "Council rock",
+			ContactLeaderEmail: "testemail2@example.com",
+		}
+		So(prdb.CreateRecord(reg2), ShouldBeNil)
+
+		config.General.EnableWaitingList = true
+
+		wait1 := &GroupPreRegistration{
+			PackName:           "Pack A",
+			GroupName:          "1st Testingway",
+			Council:            "Waiters rock",
+			ContactLeaderEmail: "testemail3@example.com",
+		}
+		So(prdb.CreateRecord(wait1), ShouldBeNil)
+
+		wait2 := &GroupPreRegistration{
+			PackName:           "Pack B",
+			GroupName:          "1st Testingway",
+			Council:            "Waiters rock",
+			ContactLeaderEmail: "testemail4@example.com",
+		}
+		So(prdb.CreateRecord(wait2), ShouldBeNil)
+
+		wait3 := &GroupPreRegistration{
+			PackName:           "Pack C",
+			GroupName:          "1st Testingway",
+			Council:            "Waiters rock",
+			ContactLeaderEmail: "testemail5@example.com",
+		}
+		So(prdb.CreateRecord(wait3), ShouldBeNil)
+
+		Convey("Fetching the default record list", func() {
+			r, err := http.NewRequest("GET", "http://localhost:8080/preregistration", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w := httptest.NewRecorder()
+
+			prh.GetList(w, r)
+
+			Convey("Should receive back a 200 code", func() {
+				So(w.Code, ShouldEqual, 200)
+				Convey("With a valid json list", func() {
+					recs := []*GroupPreRegistration{}
+					So(json.Unmarshal(w.Body.Bytes(), &recs), ShouldBeNil)
+					Convey("With all records", func() {
+						CompareList(recs, map[string]*GroupPreRegistration{
+							reg1.SecurityKey:  reg1,
+							reg2.SecurityKey:  reg2,
+							wait1.SecurityKey: wait1,
+							wait2.SecurityKey: wait2,
+							wait3.SecurityKey: wait3,
+						})
+					})
+				})
+			})
+		})
+
+		Convey("Fetching the all inclusive record list", func() {
+			r, err := http.NewRequest("GET", "http://localhost:8080/preregistration?select=all", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w := httptest.NewRecorder()
+
+			prh.GetList(w, r)
+
+			Convey("Should receive back a 200 code", func() {
+				So(w.Code, ShouldEqual, 200)
+				Convey("With a valid json list", func() {
+					recs := []*GroupPreRegistration{}
+					So(json.Unmarshal(w.Body.Bytes(), &recs), ShouldBeNil)
+					Convey("With all records", func() {
+						CompareList(recs, map[string]*GroupPreRegistration{
+							reg1.SecurityKey:  reg1,
+							reg2.SecurityKey:  reg2,
+							wait1.SecurityKey: wait1,
+							wait2.SecurityKey: wait2,
+							wait3.SecurityKey: wait3,
+						})
+					})
+				})
+			})
+		})
+
+		Convey("Fetching only the registered record list", func() {
+			r, err := http.NewRequest("GET", "http://localhost:8080/preregistration?select=registered", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w := httptest.NewRecorder()
+
+			prh.GetList(w, r)
+
+			Convey("Should receive back a 200 code", func() {
+				So(w.Code, ShouldEqual, 200)
+				Convey("With a valid json list", func() {
+					recs := []*GroupPreRegistration{}
+					So(json.Unmarshal(w.Body.Bytes(), &recs), ShouldBeNil)
+					Convey("With all records", func() {
+						CompareList(recs, map[string]*GroupPreRegistration{
+							reg1.SecurityKey: reg1,
+							reg2.SecurityKey: reg2,
+						})
+					})
+				})
+			})
+		})
+
+		Convey("Fetching only the waiting record list", func() {
+			r, err := http.NewRequest("GET", "http://localhost:8080/preregistration?select=waiting", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w := httptest.NewRecorder()
+
+			prh.GetList(w, r)
+
+			Convey("Should receive back a 200 code", func() {
+				So(w.Code, ShouldEqual, 200)
+				Convey("With a valid json list with three records", func() {
+					recs := []*GroupPreRegistrationInWaitingList{}
+					So(json.Unmarshal(w.Body.Bytes(), &recs), ShouldBeNil)
+					So(len(recs), ShouldEqual, 3)
+					Convey("With all records in order", func() {
+						Convey("For the first record", func() {
+							Convey("Should have position 1", func() {
+								So(recs[0].WaitingListPos, ShouldEqual, 1)
+								Convey("With the correct data", func() {
+									So(recs[0].GroupPreRegistration.EmailApprovalGivenAt, ShouldHappenWithin, time.Second, wait1.EmailApprovalGivenAt)
+									recs[0].GroupPreRegistration.EmailApprovalGivenAt = wait1.EmailApprovalGivenAt
+									So(recs[0].GroupPreRegistration.ValidatedOn, ShouldHappenWithin, time.Second, wait1.ValidatedOn)
+									recs[0].GroupPreRegistration.ValidatedOn = wait1.ValidatedOn
+									recs[0].GroupPreRegistration.ValidationToken = wait1.ValidationToken
+									recs[0].GroupPreRegistration.EmailConfirmationSent = wait1.EmailConfirmationSent
+
+									So(recs[0].GroupPreRegistration, ShouldResemble, wait1)
+								})
+							})
+						})
+						Convey("For the second record", func() {
+							Convey("Should have position 2", func() {
+								So(recs[1].WaitingListPos, ShouldEqual, 2)
+								Convey("With the correct data", func() {
+									So(recs[1].GroupPreRegistration.EmailApprovalGivenAt, ShouldHappenWithin, time.Second, wait2.EmailApprovalGivenAt)
+									recs[1].GroupPreRegistration.EmailApprovalGivenAt = wait2.EmailApprovalGivenAt
+									So(recs[1].GroupPreRegistration.ValidatedOn, ShouldHappenWithin, time.Second, wait2.ValidatedOn)
+									recs[1].GroupPreRegistration.ValidatedOn = wait2.ValidatedOn
+									recs[1].GroupPreRegistration.ValidationToken = wait2.ValidationToken
+									recs[1].GroupPreRegistration.EmailConfirmationSent = wait2.EmailConfirmationSent
+
+									So(recs[1].GroupPreRegistration, ShouldResemble, wait2)
+								})
+							})
+						})
+						Convey("For the third record", func() {
+							Convey("Should have position 3", func() {
+								So(recs[2].WaitingListPos, ShouldEqual, 3)
+								Convey("With the correct data", func() {
+									So(recs[2].GroupPreRegistration.EmailApprovalGivenAt, ShouldHappenWithin, time.Second, wait3.EmailApprovalGivenAt)
+									recs[2].GroupPreRegistration.EmailApprovalGivenAt = wait3.EmailApprovalGivenAt
+									So(recs[2].GroupPreRegistration.ValidatedOn, ShouldHappenWithin, time.Second, wait3.ValidatedOn)
+									recs[2].GroupPreRegistration.ValidatedOn = wait3.ValidatedOn
+									recs[2].GroupPreRegistration.ValidationToken = wait3.ValidationToken
+									recs[2].GroupPreRegistration.EmailConfirmationSent = wait3.EmailConfirmationSent
+
+									So(recs[2].GroupPreRegistration, ShouldResemble, wait3)
+								})
+							})
+						})
+					})
+				})
+			})
+		})
+	})
+}
+
 func TestGroupPreRegDbInBolt(t *testing.T) {
 	Convey("With a given bolt database", t, func() {
 		file, err := ioutil.TempFile("", "")
@@ -549,6 +767,32 @@ func TestGroupPreRegDbInBolt(t *testing.T) {
 							So(bucket.Get([]byte{0, 0, 0, 0, 0, 0, 0, 1}), ShouldResemble, key)
 							return nil
 						}), ShouldBeNil)
+					})
+				})
+				Convey("Inserting a second group", func() {
+					rec2 := GroupPreRegistration{
+						GroupName:          "2st Testingway",
+						Council:            "Council rock",
+						ContactLeaderEmail: "testemail2@example.com",
+					}
+					So(prdb.CreateRecord(&rec2), ShouldBeNil)
+
+					Convey("Should insert them set in the waiting list", func() {
+						So(rec.IsOnWaitingList, ShouldBeTrue)
+						Convey("And put them in the waiting list as the second group", func() {
+							key, err := base64.URLEncoding.DecodeString(rec.SecurityKey)
+							So(err, ShouldBeNil)
+							key2, err := base64.URLEncoding.DecodeString(rec2.SecurityKey)
+							So(err, ShouldBeNil)
+
+							So(db.View(func(tx *bolt.Tx) error {
+								bucket := tx.Bucket(BOLT_GROUPEWAITINGLISTBUCKET)
+								So(bucket.Stats().KeyN, ShouldEqual, 2)
+								So(bucket.Get([]byte{0, 0, 0, 0, 0, 0, 0, 1}), ShouldResemble, key)
+								So(bucket.Get([]byte{0, 0, 0, 0, 0, 0, 0, 2}), ShouldResemble, key2)
+								return nil
+							}), ShouldBeNil)
+						})
 					})
 				})
 
