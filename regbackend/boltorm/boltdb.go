@@ -144,3 +144,22 @@ func (t *boltTx) CreateBucketIfNotExists(name []byte) error {
 	}
 	return err
 }
+
+func (t *boltTx) GetAllByIndex(indexBucket, dataBucket []byte, dataType interface{}) (interface{}, error) {
+	ret := makeSliceFor(dataType)
+	iBucket := t.tx.Bucket(indexBucket)
+	dBucket := t.tx.Bucket(dataBucket)
+	err := iBucket.ForEach(func(_, key []byte) error {
+		_, bytes := dBucket.Bucket(key).Cursor().Last()
+		nextElement := makeNew(dataType)
+		if err := decodeData(bytes, nextElement); err != nil {
+			return err
+		}
+		ret = appendToSlice(ret, nextElement)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
+}

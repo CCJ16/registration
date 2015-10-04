@@ -193,3 +193,27 @@ func (t *memoryTx) rollback() error {
 	}
 	return nil
 }
+
+func (t *memoryTx) GetAllByIndex(indexBucket, dataBucket []byte, dataType interface{}) (interface{}, error) {
+	ret := makeSliceFor(dataType)
+	sortSlice := sorterSort{}
+	iBucket := (*t.buckets)[string(indexBucket)]
+	dBucket := (*t.buckets)[string(dataBucket)]
+	for index, keyA := range iBucket.data {
+		key := keyA[0]
+
+		dataBucket := dBucket.data[string(key)]
+		bytes := dataBucket[len(dataBucket)-1]
+
+		nextElement := makeNew(dataType)
+		if err := decodeData(bytes, nextElement); err != nil {
+			return nil, err
+		}
+		sortSlice = append(sortSlice, sorter{index, nextElement})
+	}
+	sort.Sort(&sortSlice)
+	for _, elm := range sortSlice {
+		ret = appendToSlice(ret, elm.data)
+	}
+	return ret, nil
+}

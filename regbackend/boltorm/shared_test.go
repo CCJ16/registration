@@ -135,6 +135,22 @@ func sharedTests(db DB) func() {
 										So(newData, ShouldResemble, data)
 									})
 								})
+								Convey("And fetching the record through the index with GetAllByIndex", func() {
+									var list []*testData
+									err := db.View(func(tx Tx) error {
+										ret, err := tx.GetAllByIndex(bucket2, bucket1, &testData{})
+										if err == nil {
+											list = ret.([]*testData)
+										}
+										return err
+									})
+									Convey("Should work without error", func() {
+										So(err, ShouldBeNil)
+										Convey("And have the original data", func() {
+											So(list, ShouldResemble, []*testData{{5}})
+										})
+									})
+								})
 							})
 							Convey("And storing the same index", func() {
 								err := db.Update(func(tx Tx) error {
@@ -238,6 +254,54 @@ func sharedTests(db DB) func() {
 							So(err, ShouldBeNil)
 							Convey("Should return both", func() {
 								So(list, ShouldResemble, []*testData{{5}, {6}})
+							})
+						})
+						Convey("And storing an index", func() {
+							err := db.Update(func(tx Tx) error {
+								return tx.AddIndex(bucket2, []byte("IndexB"), []byte("KeyA"))
+							})
+							Convey("Should succeed", func() {
+								So(err, ShouldBeNil)
+								Convey("And fetching the record through the index with GetAllByIndex", func() {
+									var list []*testData
+									err := db.View(func(tx Tx) error {
+										ret, err := tx.GetAllByIndex(bucket2, bucket1, &testData{})
+										if err == nil {
+											list = ret.([]*testData)
+										}
+										return err
+									})
+									Convey("Should work without error", func() {
+										So(err, ShouldBeNil)
+										Convey("And have only the one record with an index", func() {
+											So(list, ShouldResemble, []*testData{{5}})
+										})
+									})
+								})
+							})
+							Convey("And storing an index on the extra record", func() {
+								err := db.Update(func(tx Tx) error {
+									return tx.AddIndex(bucket2, []byte("IndexA"), []byte("KeyB")) // Reverse the sort order of the index compared to key, so the second record appears first.  Ensures sorting happens as expected.
+								})
+								Convey("Should succeed", func() {
+									So(err, ShouldBeNil)
+									Convey("And fetching the record through the index with GetAllByIndex", func() {
+										var list []*testData
+										err := db.View(func(tx Tx) error {
+											ret, err := tx.GetAllByIndex(bucket2, bucket1, &testData{})
+											if err == nil {
+												list = ret.([]*testData)
+											}
+											return err
+										})
+										Convey("Should work without error", func() {
+											So(err, ShouldBeNil)
+											Convey("And have only the one record with an index", func() {
+												So(list, ShouldResemble, []*testData{{6}, {5}})
+											})
+										})
+									})
+								})
 							})
 						})
 					})
