@@ -194,7 +194,7 @@ type configHandler struct {
 }
 
 func (c *configHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// This drains the connection pool 
+	// This drains the connection pool
 	cTIM.RLock()
 	defer cTIM.RUnlock()
 	wg.Add(-1)
