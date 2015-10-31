@@ -345,11 +345,17 @@ func (d *preRegDbBolt) init() error {
 
 type PreRegHandler struct {
 	db                       PreRegDb
+	config                   *configType
 	confirmationEmailService *ConfirmationEmailService
 	getHandler               *mux.Route
 }
 
 func (h *PreRegHandler) Create(w http.ResponseWriter, r *http.Request) {
+	if !h.config.General.EnableGroupReg {
+		http.Error(w, "Group registrations are closed", http.StatusForbidden)
+		return
+	}
+
 	input := GroupPreRegistration{}
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&input); err != nil {
@@ -502,9 +508,10 @@ func (h *PreRegHandler) GetInvoice(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func NewGroupPreRegistrationHandler(r *mux.Router, prdb PreRegDb, authHandler *AuthenticationHandler, confirmationEmailService *ConfirmationEmailService) *PreRegHandler {
+func NewGroupPreRegistrationHandler(r *mux.Router, config *configType, prdb PreRegDb, authHandler *AuthenticationHandler, confirmationEmailService *ConfirmationEmailService) *PreRegHandler {
 	preRegHandler := &PreRegHandler{
-		db: prdb,
+		db:     prdb,
+		config: config,
 		confirmationEmailService: confirmationEmailService,
 	}
 

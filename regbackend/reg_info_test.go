@@ -40,12 +40,16 @@ func TestPreRegCreateRequest(t *testing.T) {
 		db := boltorm.NewMemoryDB()
 		invDb, err := NewInvoiceDb(db)
 		So(err, ShouldBeNil)
-		prdb, err := NewPreRegBoltDb(db, &configType{}, invDb)
+
+		config := &configType{}
+		config.General.EnableGroupReg = true
+
+		prdb, err := NewPreRegBoltDb(db, config, invDb)
 		So(err, ShouldBeNil)
 		router := mux.NewRouter()
 		testEmailSender := &testEmailSender{}
 		ces := NewConfirmationEmailService("examplesite.com", "no-reply@examplesender.com", "no-reply", "info@infoexample.com", testEmailSender, prdb)
-		prh := NewGroupPreRegistrationHandler(router, prdb, nil, ces)
+		prh := NewGroupPreRegistrationHandler(router, config, prdb, nil, ces)
 
 		Convey("When given a good record", func() {
 			r, err := http.NewRequest("POST", "http://localhost:8080/preregistration", &goodRecordBody)
@@ -253,6 +257,22 @@ func TestPreRegCreateRequest(t *testing.T) {
 				So(w.Code, ShouldEqual, 400)
 			})
 		})
+
+		Convey("When inserted with registrations closed", func() {
+			config.General.EnableGroupReg = false
+
+			r, err := http.NewRequest("POST", "http://localhost:8080/preregistration", &goodRecordBody)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w := httptest.NewRecorder()
+
+			router.ServeHTTP(w, r)
+
+			Convey("Should receive back a 403 status code", func() {
+				So(w.Code, ShouldEqual, 403)
+			})
+		})
 	})
 }
 
@@ -284,7 +304,7 @@ func TestPreRegListHandler(t *testing.T) {
 		router := mux.NewRouter()
 		testEmailSender := &testEmailSender{}
 		ces := NewConfirmationEmailService("examplesite.com", "no-reply@examplesender.com", "no-reply", "info@infoexample.com", testEmailSender, prdb)
-		prh := NewGroupPreRegistrationHandler(router, prdb, nil, ces)
+		prh := NewGroupPreRegistrationHandler(router, config, prdb, nil, ces)
 
 		reg1 := &GroupPreRegistration{
 			PackName:           "Pack A",
