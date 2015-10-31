@@ -1,95 +1,13 @@
 <div layout="row" layout-align="center">
 	<md-card flex-gt-lg="66" flex="90">
 		<md-card-content>
-			<md-toolbar><h2 class="md-toolbar-tools"><span><span class="title-text">CCJ'16</span> Wait List</span></h2></md-toolbar>
-			<p>Complete all fields on the form to submit your Pack's application for <span class="title-text">CCJ'16</span> waiting list (fields marked with a <span class="required-field-marker">*</span> are mandatory). You will receive an email requesting you to confirm your email address. Once you confirm your email address, your application will be accepted. As spots become available for your pack you will be notified by an email from the registration team.</p>
-			<div layout="row" layout-align="center">
-				<form layout="column" name="registrationForm" ng-submit="submitRegistration();">
-					<div layout-gt-sm="row" layout="column" layout-align="center">
-						<div layout="column">
-							<h3>Group information</h3>
-							<div layout="row">
-								<md-input-container>
-									<label>Council<span class="required-field-marker">*</span></label>
-									<input type="text" ng-model="registration.council" required>
-								</md-input-container>
-								<md-input-container>
-									<label>Group Name<span class="required-field-marker">*</span></label>
-									<input type="text" ng-model="registration.groupName" required>
-								</md-input-container>
-							</div>
-							<div layout="row">
-								<md-input-container>
-									<label>Pack Name</label>
-									<input type="text" ng-model="registration.packName">
-								</md-input-container>
-							</div>
-							<h3>Estimated Participant counts</h3>
-							<div layout="row">
-								<md-input-container>
-									<label>Estimated Youth</label>
-									<input type="number" ng-model="registration.estimatedYouth" min="0" max="50" step="1">
-								</md-input-container>
-								<md-input-container>
-									<label>Estimated Leaders</label>
-									<input type="number" ng-model="registration.estimatedLeaders" min="0" max="15" step="1">
-								</md-input-container>
-							</div>
-						</div>
-						<div layout="column">
-							<h3>Contact Leader information</h3>
-							<div layout="row">
-								<md-input-container>
-									<label>First Name<span class="required-field-marker">*</span></label>
-									<input type="text" ng-model="registration.contactLeaderFirstName" required>
-								</md-input-container>
-								<md-input-container>
-									<label>Last Name<span class="required-field-marker">*</span></label>
-									<input type="text" ng-model="registration.contactLeaderLastName" required>
-								</md-input-container>
-							</div>
-							<div layout="row">
-								<md-input-container>
-									<label>Email<span class="required-field-marker">*</span></label>
-									<input type="email" ng-model="registration.contactLeaderEmail" required>
-								</md-input-container>
-								<md-input-container>
-									<label>Phone Number<span class="required-field-marker">*</span></label>
-									<input type="tel" ng-model="registration.contactLeaderPhoneNumber" required>
-								</md-input-container>
-							</div>
-							<div layout="row">
-								<md-input-container>
-									<label>Address 1</label>
-									<input type="text" ng-model="registration.contactLeaderAddress.address1">
-								</md-input-container>
-								<md-input-container>
-									<label>Address 2</label>
-									<input type="text" ng-model="registration.contactLeaderAddress.address2">
-								</md-input-container>
-							</div>
-							<div layout="row">
-								<md-input-container>
-									<label>City</label>
-									<input type="text" ng-model="registration.contactLeaderAddress.city">
-								</md-input-container>
-								<md-input-container>
-									<label>Province</label>
-									<input type="text" ng-model="registration.contactLeaderAddress.province">
-								</md-input-container>
-							</div>
-							<div layout="row">
-								<md-input-container>
-									<label>Postal Code</label>
-									<input type="text" ng-model="registration.contactLeaderAddress.postalCode">
-								</md-input-container>
-							</div>
-						</div>
-					</div>
-					<div layout="row" layout-sm="column"><md-checkbox ng-model="registration.agreedToEmailTerms" ng-model-options="{getterSetter: true}">I agree to receive emails from the <span class="title-text">CCJ'16</span> team about the Cub Jamboree. (Required)</md-checkbox><md-button type="button" class="btn-agreement md-accent" ng-click="showEmailTos($event)">Details</md-button></div>
-					<md-button type="submit" class="md-raised md-primary" ng-disabled="!registrationTosAccepted">Submit registration</md-button>
-				</form>
-			</div>
+			<md-toolbar><h2 class="md-toolbar-tools"><span><span class="title-text">CCJ'16</span> Cub Pack Registration Closed</span></h2></md-toolbar>
+			<p>Due to the overwhelming response from Cub Scout packs across Canada, we are full to the brim.  Therefore, we are no longer able to accept applications for your participation.  The waiting list is now closed, and we regret that we cannot accept further registrations.  All groups that have registered, and had their deposits processed, will have received confirmation emails regarding this.  All groups on the waiting list will also have received an email with regards to their status on the list.<p>
+			<p>Adults and Venturers who still wish to participate are encouraged and invited to join us as an Offer of Service.  Be part of the celebration, and join in.  Application forms can be found here:</p>
+			<ul>
+				<li><a href="//forms.cubjamboree.ca/CCJ16OOS-Registration-Form.pdf">Offer of Service Registration Form</a></li>
+				<li><a href="//forms.cubjamboree.ca/CCJ16OOS-Daytripper-Registration-Form.pdf">Daytripper Offer of Service Registration Form</a></li>
+			</ul>
 		</md-card-content>
 	</md-card>
 </div>
