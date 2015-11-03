@@ -1,6 +1,7 @@
 package boltorm
 
 import (
+	"bytes"
 	"encoding/binary"
 
 	"github.com/boltdb/bolt"
@@ -162,4 +163,15 @@ func (t *boltTx) GetAllByIndex(indexBucket, dataBucket []byte, dataType interfac
 		return nil, err
 	}
 	return ret, nil
+}
+
+func (t *boltTx) RemoveKeyFromIndex(indexBucket, key []byte) error {
+	iBucket := t.tx.Bucket(indexBucket)
+	c := iBucket.Cursor()
+	for k, v := c.First(); k != nil; k, v = c.Next() {
+		if bytes.Compare(v, key) == 0 {
+			c.Delete()
+		}
+	}
+	return nil
 }

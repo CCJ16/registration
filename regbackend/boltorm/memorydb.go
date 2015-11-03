@@ -1,6 +1,7 @@
 package boltorm
 
 import (
+	"bytes"
 	"sort"
 	"sync"
 )
@@ -216,4 +217,16 @@ func (t *memoryTx) GetAllByIndex(indexBucket, dataBucket []byte, dataType interf
 		ret = appendToSlice(ret, elm.data)
 	}
 	return ret, nil
+}
+
+func (t *memoryTx) RemoveKeyFromIndex(indexBucket, key []byte) error {
+	iBucket := (*t.buckets)[string(indexBucket)]
+	for index, keyA := range iBucket.data {
+		curKey := keyA[0]
+
+		if bytes.Compare(curKey, key) == 0 {
+			delete(iBucket.data, index)
+		}
+	}
+	return nil
 }

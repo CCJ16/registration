@@ -160,6 +160,23 @@ func sharedTests(db DB) func() {
 									So(ErrKeyAlreadyExists.Contains(err), ShouldBeTrue)
 								})
 							})
+							Convey("And removing said index", func() {
+								err := db.Update(func(tx Tx) error {
+									return tx.RemoveKeyFromIndex(bucket2, []byte("KeyA"))
+								})
+								Convey("Should work without error", func() {
+									So(err, ShouldBeNil)
+									Convey("And fetching the record through the index should fail", func() {
+										newData := testData{}
+										err := db.View(func(tx Tx) error {
+											return tx.GetByIndex(bucket2, bucket1, []byte("IndexA"), &newData)
+										})
+										Convey("By throwing a key not existing error", func() {
+											So(ErrKeyDoesNotExist.Contains(err), ShouldBeTrue)
+										})
+									})
+								})
+							})
 						})
 					})
 					Convey("Fetching the record through a nonexistent index should fail", func() {

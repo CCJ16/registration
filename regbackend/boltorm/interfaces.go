@@ -27,4 +27,6 @@ type Tx interface {
 	GetAll(bucket []byte, dataType interface{}) (interface{}, error)
 	GetByIndex(indexBucket, dataBucket, index []byte, data interface{}) error
 	GetAllByIndex(indexBucket, bucket []byte, dataType interface{}) (interface{}, error)
+
+	RemoveKeyFromIndex(indexBucket, key []byte) error
 }
