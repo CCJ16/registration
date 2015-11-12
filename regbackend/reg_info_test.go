@@ -17,6 +17,7 @@ import (
 	"github.com/CCJ16/registration/regbackend/boltorm"
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -293,7 +294,7 @@ func CompareList(actual []*GroupPreRegistration, expected map[string]*GroupPreRe
 	}
 }
 
-func TestPreRegListHandler(t *testing.T) {
+func TestPreRegWaitingListHandler(t *testing.T) {
 	Convey("Starting with a valid handler with 2 groups registered and 3 waiting", t, func() {
 		db := boltorm.NewMemoryDB()
 		invDb, err := NewInvoiceDb(db)
@@ -304,7 +305,8 @@ func TestPreRegListHandler(t *testing.T) {
 		router := mux.NewRouter()
 		testEmailSender := &testEmailSender{}
 		ces := NewConfirmationEmailService("examplesite.com", "no-reply@examplesender.com", "no-reply", "info@infoexample.com", testEmailSender, prdb)
-		prh := NewGroupPreRegistrationHandler(router, config, prdb, nil, ces)
+		store := sessions.NewCookieStore([]byte("A"))
+		prh := NewGroupPreRegistrationHandler(router, config, prdb, &AuthenticationHandler{config, store}, ces)
 
 		reg1 := &GroupPreRegistration{
 			PackName:           "Pack A",
@@ -484,6 +486,151 @@ func TestPreRegListHandler(t *testing.T) {
 									recs[2].GroupPreRegistration.EmailConfirmationSent = wait3.EmailConfirmationSent
 
 									So(recs[2].GroupPreRegistration, ShouldResemble, wait3)
+								})
+							})
+						})
+					})
+				})
+			})
+		})
+		Convey("And promoting the second record to a full registration", func() {
+			r, err := http.NewRequest("POST", "http://localhost:8080/preregistration/"+wait2.SecurityKey+"/promote", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w := httptest.NewRecorder()
+
+			Convey("While logged in", func() {
+				// Fake being logged in
+				sess, err := sessions.GetRegistry(r).Get(store, globalSessionName)
+				So(err, ShouldBeNil)
+				So(sess, ShouldNotBeNil)
+				sess.Values[authStatusLoggedIn] = true
+
+				router.ServeHTTP(w, r)
+				Convey("Should receive back a 200 code", func() {
+					So(w.Code, ShouldEqual, 200)
+					wait2.IsOnWaitingList = false // This will be updated by above.
+					Convey("And trying again on the same record", func() {
+						r, err := http.NewRequest("POST", "http://localhost:8080/preregistration/"+wait2.SecurityKey+"/promote", nil)
+						if err != nil {
+							t.Fatal(err)
+						}
+						w := httptest.NewRecorder()
+
+						// Fake being logged in
+						sess, err := sessions.GetRegistry(r).Get(store, globalSessionName)
+						So(err, ShouldBeNil)
+						So(sess, ShouldNotBeNil)
+						sess.Values[authStatusLoggedIn] = true
+
+						router.ServeHTTP(w, r)
+						Convey("Should receive back a 400 code", func() {
+							So(w.Code, ShouldEqual, 400)
+						})
+					})
+
+					Convey("Fetching only the registered record list", func() {
+						r, err := http.NewRequest("GET", "http://localhost:8080/preregistration?select=registered", nil)
+						if err != nil {
+							t.Fatal(err)
+						}
+						w := httptest.NewRecorder()
+
+						prh.GetList(w, r)
+
+						Convey("Should receive back a 200 code", func() {
+							So(w.Code, ShouldEqual, 200)
+							Convey("With a valid json list", func() {
+								recs := []*GroupPreRegistration{}
+								So(json.Unmarshal(w.Body.Bytes(), &recs), ShouldBeNil)
+								Convey("With all records including the new waitlist", func() {
+									CompareList(recs, map[string]*GroupPreRegistration{
+										reg1.SecurityKey:  reg1,
+										reg2.SecurityKey:  reg2,
+										wait2.SecurityKey: wait2,
+									})
+								})
+							})
+						})
+					})
+
+					Convey("Fetching only the waiting record list", func() {
+						r, err := http.NewRequest("GET", "http://localhost:8080/preregistration?select=waiting", nil)
+						if err != nil {
+							t.Fatal(err)
+						}
+						w := httptest.NewRecorder()
+
+						prh.GetList(w, r)
+
+						Convey("Should receive back a 200 code", func() {
+							So(w.Code, ShouldEqual, 200)
+							Convey("With a valid json list with two records, missing the lost waiting list", func() {
+								recs := []*GroupPreRegistrationInWaitingList{}
+								So(json.Unmarshal(w.Body.Bytes(), &recs), ShouldBeNil)
+								So(len(recs), ShouldEqual, 2)
+								Convey("With all records in order", func() {
+									Convey("For the first record", func() {
+										Convey("Should have position 1", func() {
+											So(recs[0].WaitingListPos, ShouldEqual, 1)
+											Convey("With the correct data", func() {
+												So(recs[0].GroupPreRegistration.EmailApprovalGivenAt, ShouldHappenWithin, time.Second, wait1.EmailApprovalGivenAt)
+												recs[0].GroupPreRegistration.EmailApprovalGivenAt = wait1.EmailApprovalGivenAt
+												So(recs[0].GroupPreRegistration.ValidatedOn, ShouldHappenWithin, time.Second, wait1.ValidatedOn)
+												recs[0].GroupPreRegistration.ValidatedOn = wait1.ValidatedOn
+												recs[0].GroupPreRegistration.ValidationToken = wait1.ValidationToken
+												recs[0].GroupPreRegistration.EmailConfirmationSent = wait1.EmailConfirmationSent
+
+												So(recs[0].GroupPreRegistration, ShouldResemble, wait1)
+											})
+										})
+									})
+									Convey("For the second record", func() {
+										Convey("Should have position 2", func() {
+											So(recs[1].WaitingListPos, ShouldEqual, 2)
+											Convey("With the correct data", func() {
+												So(recs[1].GroupPreRegistration.EmailApprovalGivenAt, ShouldHappenWithin, time.Second, wait3.EmailApprovalGivenAt)
+												recs[1].GroupPreRegistration.EmailApprovalGivenAt = wait3.EmailApprovalGivenAt
+												So(recs[1].GroupPreRegistration.ValidatedOn, ShouldHappenWithin, time.Second, wait3.ValidatedOn)
+												recs[1].GroupPreRegistration.ValidatedOn = wait3.ValidatedOn
+												recs[1].GroupPreRegistration.ValidationToken = wait3.ValidationToken
+												recs[1].GroupPreRegistration.EmailConfirmationSent = wait3.EmailConfirmationSent
+
+												So(recs[1].GroupPreRegistration, ShouldResemble, wait3)
+											})
+										})
+									})
+								})
+							})
+						})
+					})
+				})
+			})
+			Convey("While not logged in", func() {
+				router.ServeHTTP(w, r)
+				Convey("Should receive back a 403 code", func() {
+					So(w.Code, ShouldEqual, 403)
+
+					Convey("And fetching only the registered record list", func() {
+						r, err := http.NewRequest("GET", "http://localhost:8080/preregistration?select=registered", nil)
+						if err != nil {
+							t.Fatal(err)
+						}
+						w := httptest.NewRecorder()
+
+						prh.GetList(w, r)
+
+						Convey("Should receive back a 200 code", func() {
+							So(w.Code, ShouldEqual, 200)
+							Convey("With a valid json list", func() {
+								recs := []*GroupPreRegistration{}
+								So(json.Unmarshal(w.Body.Bytes(), &recs), ShouldBeNil)
+								Convey("With all records the same, as no promotion happened.", func() {
+									CompareList(recs, map[string]*GroupPreRegistration{
+										reg1.SecurityKey: reg1,
+										reg2.SecurityKey: reg2,
+									})
 								})
 							})
 						})

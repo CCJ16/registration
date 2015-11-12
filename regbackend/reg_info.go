@@ -121,6 +121,7 @@ type PreRegDb interface {
 	NoteConfirmationEmailSent(rec *GroupPreRegistration) error
 	VerifyEmail(email, token string) error
 	CreateInvoiceIfNotExists(rec *GroupPreRegistration) (inv *Invoice, err error)
+	Promote(securityKey string) error
 }
 
 var (
@@ -131,6 +132,7 @@ var (
 	GroupAlreadyCreated    = DBError.NewClass("Group already registered", errhttp.SetStatusCode(400))
 	BadVerificationToken   = DBError.NewClass("Bad email verification token")
 	NoInvoiceOnWaitingList = DBError.NewClass("No payments are collected on the waiting list", errhttp.SetStatusCode(400))
+	NotOnWaitingList       = DBError.NewClass("Record is already not on the waiting list", errhttp.SetStatusCode(400))
 )
 
 var (
@@ -203,20 +205,24 @@ func (d *preRegDbBolt) CreateRecord(in *GroupPreRegistration) error {
 	}
 }
 
+func (d *preRegDbBolt) getRecord(tx boltorm.Tx, securityKey string) (rec *GroupPreRegistration, err error) {
+	rec = &GroupPreRegistration{}
+	if key, err := base64.URLEncoding.DecodeString(securityKey); err != nil {
+		return nil, err
+	} else if err = tx.Get(BOLT_GROUPBUCKET, key, rec); err != nil {
+		if boltorm.ErrKeyDoesNotExist.Contains(err) {
+			return nil, RecordDoesNotExist.New("Could not find preregistration")
+		} else {
+			return nil, err
+		}
+	}
+	return rec, nil
+}
+
 func (d *preRegDbBolt) GetRecord(securityKey string) (rec *GroupPreRegistration, err error) {
 	return rec, d.db.View(func(tx boltorm.Tx) error {
-		res := &GroupPreRegistration{}
-		if key, err := base64.URLEncoding.DecodeString(securityKey); err != nil {
-			return err
-		} else if err = tx.Get(BOLT_GROUPBUCKET, key, res); err != nil {
-			if boltorm.ErrKeyDoesNotExist.Contains(err) {
-				return RecordDoesNotExist.New("Could not find preregistration")
-			} else {
-				return err
-			}
-		}
-		rec = res
-		return nil
+		rec, err = d.getRecord(tx, securityKey)
+		return err
 	})
 }
 
@@ -323,6 +329,29 @@ func (d *preRegDbBolt) CreateInvoiceIfNotExists(gpr *GroupPreRegistration) (inv 
 		return tx.Update(BOLT_GROUPBUCKET, rec.Key(), rec)
 	})
 	return inv, err
+}
+
+func (d *preRegDbBolt) Promote(securityKey string) error {
+	return d.db.Update(func(tx boltorm.Tx) error {
+		rec, err := d.getRecord(tx, securityKey)
+		if err != nil {
+			return err
+		}
+
+		if !rec.IsOnWaitingList {
+			return NotOnWaitingList.New(securityKey + " is not on the waiting list!")
+		}
+
+		// Ok, this record is ready to move.  Change its flag and remove from the index.
+		rec.IsOnWaitingList = false
+		if err := tx.RemoveKeyFromIndex(BOLT_GROUPEWAITINGLISTBUCKET, rec.Key()); err != nil {
+			return err
+		}
+		if err := tx.Update(BOLT_GROUPBUCKET, rec.Key(), rec); err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func (d *preRegDbBolt) init() error {
@@ -508,6 +537,20 @@ func (h *PreRegHandler) GetInvoice(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *PreRegHandler) PromoteToRegistration(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	securityKey, ok := vars["SecurityKey"]
+	if !ok {
+		http.Error(w, "No key given", 404)
+		return
+	}
+	err := h.db.Promote(securityKey)
+	if err != nil {
+		httpError(w, err)
+		return
+	}
+}
+
 func NewGroupPreRegistrationHandler(r *mux.Router, config *configType, prdb PreRegDb, authHandler *AuthenticationHandler, confirmationEmailService *ConfirmationEmailService) *PreRegHandler {
 	preRegHandler := &PreRegHandler{
 		db:     prdb,
@@ -520,6 +563,7 @@ func NewGroupPreRegistrationHandler(r *mux.Router, config *configType, prdb PreR
 	preRegHandler.getHandler = r.HandleFunc("/preregistration/{SecurityKey:[a-zA-Z0-9-_]+}", preRegHandler.Get).Methods("GET")
 	r.HandleFunc("/preregistration", authHandler.AdminFunc(preRegHandler.GetList)).Methods("Get")
 	r.HandleFunc("/preregistration/{SecurityKey:[a-zA-Z0-9-_]+}/invoice", preRegHandler.GetInvoice).Methods("GET")
+	r.HandleFunc("/preregistration/{SecurityKey:[a-zA-Z0-9-_]+}/promote", authHandler.AdminFunc(preRegHandler.PromoteToRegistration)).Methods("POST")
 
 	return preRegHandler
 }
