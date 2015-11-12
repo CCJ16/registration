@@ -14,10 +14,11 @@
 						<th>Email</th>
 						<th>Phone Number</th>
 						<th>Page</th>
+						<th>Actions</th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr ng-repeat="item in registrations">
+					<tr ng-repeat="(index, item) in registrations">
 						<td>{{item.waitingListPos}}</td>
 						<td>{{item.council}}</td>
 						<td>{{item.groupName}}</td>
@@ -27,6 +28,7 @@
 						<td>{{item.contactLeaderEmail}} <span ng-show="item.validatedEmail()">(Verified)</span></td>
 						<td>{{item.contactLeaderPhoneNumber}}</td>
 						<td><a href="/registration/{{item.securityKey}}">Page</a></td>
+						<td><button class="md-button" ng-click="promote(index, $event)">Promote</button></td>
 					</tr>
 				</tbody>
 			</table>

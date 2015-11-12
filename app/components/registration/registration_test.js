@@ -5,7 +5,7 @@ describe("ccj16reg.registration module", function() {
 	beforeEach(module("ccj16reg.registration"));
 
 	describe("registration service", function() {
-		var $httpBackend, Registration, curDate = new Date().toISOString();
+		var $httpBackend, $rootScope, Registration, curDate = new Date().toISOString();
 
 		beforeEach(function() {
 			module(function($provide) {
@@ -17,6 +17,7 @@ describe("ccj16reg.registration module", function() {
 
 		beforeEach(inject(function($injector, _Registration_) {
 			$httpBackend = $injector.get("$httpBackend");
+			$rootScope = $injector.get("$rootScope");
 
 			Registration = _Registration_;
 		}))
@@ -137,6 +138,68 @@ describe("ccj16reg.registration module", function() {
 				var newReg = new Registration();
 				newReg.validatedOn = new Date().toISOString();
 				expect(newReg.validatedEmail()).toBe(true);
+			});
+		});
+
+		describe("should have a working promote function", function() {
+
+			it("should exist as a function", function() {
+				var newReg = new Registration();
+				expect(newReg.promote).toBeDefined();
+			});
+
+			it("should return a failing promise for a regular registration", function() {
+				var newReg = new Registration()
+				newReg.securityKey = "key"
+				newReg.isOnWaitingList = false
+
+				var good
+				newReg.promote().then(function() {
+					good = false
+				}, function(error) {
+					good = error
+				})
+
+				$rootScope.$apply();
+				expect(good).toBe("Group is not on the waiting list")
+			});
+
+			it("should return poke the right endpoint and succeed on 200", function() {
+				var newReg = new Registration()
+				newReg.securityKey = "key"
+				newReg.isOnWaitingList = true
+
+				$httpBackend.expectPOST("/api/preregistration/key/promote").respond(200, "")
+
+				var good
+
+				newReg.promote().then(function() {
+					good = true
+				}, function() {
+					good = false
+				})
+
+				$httpBackend.flush()
+				expect(good).toBe(true)
+			});
+
+			it("should return poke the right endpoint and fail with the error message on !2xx", function() {
+				var newReg = new Registration()
+				newReg.securityKey = "key"
+				newReg.isOnWaitingList = true
+
+				$httpBackend.expectPOST("/api/preregistration/key/promote").respond(500, "Error message")
+
+				var good
+
+				newReg.promote().then(function() {
+					good = false
+				}, function(error) {
+					good = error
+				})
+
+				$httpBackend.flush()
+				expect(good).toBe("Error message")
 			});
 		});
 
