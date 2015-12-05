@@ -134,3 +134,17 @@ func TestXsrfVerifications(t *testing.T) {
 		})
 	})
 }
+
+func TestStringSliceConfig(t *testing.T) {
+	Convey("With a valid stringSliceConfig object", t, func() {
+		var ssc stringSliceConfig
+		Convey("Parsing a string with comma separated values returns the string split", func() {
+			str := "test,string,values,nums223,email@email.com"
+			ssc.Set(str)
+			So(ssc, ShouldResemble, stringSliceConfig{"test", "string", "values", "nums223", "email@email.com"})
+			Convey("And stringifying that should return the original string surrounded by quotes", func() {
+				So(ssc.String(), ShouldEqual, "\""+str+"\"")
+			})
+		})
+	})
+}
