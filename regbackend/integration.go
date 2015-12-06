@@ -209,7 +209,7 @@ func (c *configChange) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Print("Failed config object encode: ", err)
 			httpError(w, err)
 		} else {
-			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
 			if n, err := w.Write(data); err != nil || n != len(data) {
 				log.Printf("Failed to write entire config object, got error %s, wrote %v", err, n)
 			}
