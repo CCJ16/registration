@@ -1,9 +1,15 @@
-angular.module("ccj16reg.view.register", ["ngRoute", "ngSanitize", "ngMaterial", "ccj16reg.registration"])
+angular.module("ccj16reg.view.register", ["ngRoute", "ngSanitize", "ngMaterial", "ccj16reg.registration", "ccj16reg.config"])
 
-.config(function($routeProvider) {
+.config(function($routeProvider, Config) {
 	"use strict";
+	var template = "views/register/register.html"
+	if (!Config.registrationOpen) {
+		template = "views/register/register_closed.html"
+	} else if (Config.registrationOnWaitingList) {
+		template = "views/register/register_waitlist.html"
+	}
 	$routeProvider.when("/register", {
-		templateUrl: "views/register/register.html",
+		templateUrl: template,
 		controller: "RegisterCtrl"
 	});
 })
