@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" ng-app="ccj16reg" class="no-js">
+<html lang="en" class="no-js">
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -30,6 +30,38 @@
 		<md-toolbar><h1 class="md-toolbar-tools"><span><span class="title-text">CCJ'16</span> Registration{{packDisplayName}}</span></h1></md-toolbar>
 		<md-content ng-view layout="column" flex></md-content>
 	</div>
+	<script>
+var configData = {
+	then: function(f) {
+		if (this.data !== undefined) {
+			f(this.data)
+		} else {
+			this.f = f
+		}
+	},
+	resolve: function(d) {
+		this.data = d
+		if (this.f !== undefined) {
+			this.f(d)
+		}
+	}
+};
+(function() {
+	"use strict";
+	var xhr = new XMLHttpRequest()
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState === XMLHttpRequest.DONE) {
+			if (xhr.status === 200) {
+				console.log(JSON.parse(xhr.responseText))
+				configData.resolve(JSON.parse(xhr.responseText))
+			}
+		}
+	}
+
+	xhr.open("GET", "/config")
+	xhr.send()
+})()
+	</script>
     <!-- build:js(app) app/app.js -->
 	<script src="bower_components/angular/angular.js"></script>
 	<script src="bower_components/angular-animate/angular-animate.js"></script>
@@ -57,6 +89,12 @@
 	<script src="components/summary/summary.js"></script>
 	<script src="components/registration/registration.js"></script>
 <!-- endbuild -->
+	<script>
+configData.then(function(data) {
+	angular.module("ccj16reg.config", []).constant("Config", data)
+	angular.bootstrap(document, ['ccj16reg'])
+})
+	</script>
 	<script src="https://apis.google.com/js/client:platform.js"></script>
 </body>
 </html>
