@@ -191,6 +191,24 @@ func TestConfigHandler(t *testing.T) {
 	})
 }
 
+func TestDisableCacheHandler(t *testing.T) {
+	Convey("With setup", t, func() {
+		r, err := http.NewRequest("GET", "http://localhost:8080/config", nil)
+		So(err, ShouldBeNil)
+		w := httptest.NewRecorder()
+		handler := disableCacheHandler{&configHandler{&configType{}}}
+		handler.ServeHTTP(w, r)
+		w.Flush()
+		So(w.Code, ShouldEqual, 200)
+		Convey("The header is present", func() {
+			So(w.HeaderMap.Get("Cache-Control"), ShouldEqual, "no-cache, no-store")
+		})
+		Convey("And config handler was called and returned its data", func() {
+			So(w.Body.Len(), ShouldNotEqual, 0)
+		})
+	})
+}
+
 func init() {
 	// Disable log output for now, to clean up output.
 	log.SetOutput(ioutil.Discard)

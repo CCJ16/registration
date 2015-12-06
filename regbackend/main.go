@@ -269,6 +269,15 @@ func (c *configHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	e.Encode(config)
 }
 
+type disableCacheHandler struct {
+	h http.Handler
+}
+
+func (h disableCacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store")
+	h.h.ServeHTTP(w, r)
+}
+
 type httpRouter interface {
 	Handle(string, http.Handler)
 	HandleFunc(string, func(http.ResponseWriter, *http.Request))
@@ -324,7 +333,7 @@ func setupStandardHandlers(globalRouter httpRouter, config *configType, db *bolt
 	apiR.Handle("/grabdb", &grabDb{db}).Headers("X-My-Auth-Token", key).Methods("GET").Queries("key", key)
 	globalRouter.Handle("/config", &configHandler{config})
 
-	globalRouter.Handle("/api/", &xsrfVerifierHandler{&xsrfTokenCreator{nil, config, boltStore}, apiR})
+	globalRouter.Handle("/api/", &disableCacheHandler{&xsrfVerifierHandler{&xsrfTokenCreator{nil, config, boltStore}, apiR}})
 	otherFiles := http.FileServer(http.Dir(config.General.StaticFilesLocation))
 	globalRouter.Handle("/app/", otherFiles)
 	globalRouter.Handle("/components/", otherFiles)
