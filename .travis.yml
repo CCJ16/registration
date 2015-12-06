@@ -12,12 +12,25 @@ env:
     - secure: RgQaAlyUvBfM4SUi7dzQp+PVAFEVa9uTvSN5mrwtwYgcogrUk0enFg58PPYWAHIXaImL61fJrchvswESUMEOFS63yjj0ExPQVxMbVGrnHOZxpQyMIfhRlqrrDsh5ebWhsnia9nmovqX5d93o477DNgFrxhMSVZvPcOD5FxLOzZA=
 
 addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - g++-4.9
+    - gcc-4.9
+  firefox: "latest"
   sauce_connect: true
 
 install:
+  - nvm install stable
+  - nvm use stable
+  - export CC="gcc-4.9" export CXX="g++-4.9" LINK="gcc-4.9" LINKXX="g++-4.9"
+  - node --version
+  - gcc --version
   - go get -v -t ./...
   - pushd regbackend && go build -v && go build -v -tags integration && popd
   - npm install
+  - npm install -g grunt-cli
 
 before_script:
   - export DISPLAY=:99.0
