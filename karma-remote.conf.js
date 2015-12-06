@@ -32,7 +32,8 @@ module.exports = function(config){
 			"app/bower_components/moment/moment.js",
 			"app/bower_components/moment-timezone/builds/moment-timezone-with-data.js",
 			"app/components/**/*.js",
-			"app/views/**/*.js"
+			"app/views/**/*.js",
+			"app/app/*.js"
 		],
 
 		singleRun : true,
