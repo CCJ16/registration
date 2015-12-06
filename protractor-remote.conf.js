@@ -13,11 +13,10 @@ exports.config = {
 	],
 
 	multiCapabilities: [
-		addCommon({browserName: "chrome", version: 41}),
-		addCommon({browserName: "firefox", version: 36}),
+		addCommon({browserName: "chrome", version: 46}),
+		addCommon({browserName: "firefox", version: 42}),
 		addCommon({browserName: "internet explorer", version: 11}),
-		addCommon({browserName: "internet explorer", version: 10}),
-		addCommon({browserName: "safari", version: "8", platform: "OS X 10.10"}),
+		addCommon({browserName: "safari", version: "9.0", platform: "OS X 10.11"}),
 	],
 
 	baseUrl: "http://localhost:9090",
