@@ -9,14 +9,14 @@ describe("Initial registration process", function() {
 		expect(browser.getLocationAbsUrl()).toMatch("/register");
 	});
 
-	describe("by registering", function() {
+	describe("by registering with open registration", function() {
 		it("should render the registration form without user information in the main header", function() {
 			expect(element.all(by.css("h1")).first().getText()).
 				toBe("CCJ'16 Registration");
 		});
 		it("should render the registration form in the view", function() {
 			expect(element.all(by.css("[ng-view] h2")).first().getText()).
-				toBe("CCJ'16 Wait List");
+				toBe("Group pre-registration");
 		});
 		it("should have the submit button disabled by default", function() {
 			var button = element(by.css("button.md-button.md-primary"));
