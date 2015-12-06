@@ -6,11 +6,11 @@ import (
 	"log"
 	"net/http"
 
-	"google.golang.org/api/plus/v1"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/plus/v1"
 )
 
 type authStatusType int
