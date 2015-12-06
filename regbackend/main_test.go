@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -147,6 +148,45 @@ func TestStringSliceConfig(t *testing.T) {
 			Convey("And stringifying that should return the original string surrounded by quotes", func() {
 				So(ssc.String(), ShouldEqual, "\""+str+"\"")
 			})
+		})
+	})
+}
+
+func TestConfigHandler(t *testing.T) {
+	Convey("With setup", t, func() {
+		verifyResult := func(wait, open bool) func() {
+			return func() {
+				r, err := http.NewRequest("GET", "http://localhost:8080/config", nil)
+				So(err, ShouldBeNil)
+				w := httptest.NewRecorder()
+				c := &configType{}
+				c.General.EnableWaitingList = wait
+				c.General.EnableGroupReg = open
+				handler := configHandler{c}
+				handler.ServeHTTP(w, r)
+				w.Flush()
+				So(w.Code, ShouldEqual, 200)
+				m := make(map[string]bool)
+				json.Unmarshal(w.Body.Bytes(), &m)
+				v, ok := m["registrationOpen"]
+				So(ok, ShouldBeTrue)
+				So(v, ShouldEqual, open)
+				v, ok = m["registrationOnWaitingList"]
+				So(ok, ShouldBeTrue)
+				So(v, ShouldEqual, wait)
+			}
+		}
+		Convey("with disabled waiting list and disabled registration", func() {
+			Convey("Succeeds", verifyResult(false, false))
+		})
+		Convey("with enabled waiting list and disabled registration", func() {
+			Convey("Succeeds", verifyResult(true, false))
+		})
+		Convey("with disabled waiting list and enabled registration", func() {
+			Convey("Succeeds", verifyResult(false, true))
+		})
+		Convey("with enabled waiting list and enabled registration", func() {
+			Convey("Succeeds", verifyResult(true, true))
 		})
 	})
 }

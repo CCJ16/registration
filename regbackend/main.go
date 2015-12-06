@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/gob"
 	"fmt"
 	"log"
@@ -246,6 +247,28 @@ func (h *xsrfVerifierHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+type configHandler struct {
+	config *configType
+}
+
+func (c *configHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.NotFound(w, r)
+		return
+	}
+
+	config := struct {
+		RegistrationOpen bool `json:"registrationOpen"`
+		RegistrationOnWaitingList bool `json:"registrationOnWaitingList"`
+	}{
+		RegistrationOpen: c.config.General.EnableGroupReg,
+		RegistrationOnWaitingList: c.config.General.EnableWaitingList,
+	}
+
+	e := json.NewEncoder(w)
+	e.Encode(config)
+}
+
 type httpRouter interface {
 	Handle(string, http.Handler)
 	HandleFunc(string, func(http.ResponseWriter, *http.Request))
@@ -299,6 +322,7 @@ func setupStandardHandlers(globalRouter httpRouter, config *configType, db *bolt
 	NewSummaryHandler(apiR, gprdb)
 
 	apiR.Handle("/grabdb", &grabDb{db}).Headers("X-My-Auth-Token", key).Methods("GET").Queries("key", key)
+	globalRouter.Handle("/config", &configHandler{config})
 
 	globalRouter.Handle("/api/", &xsrfVerifierHandler{&xsrfTokenCreator{nil, config, boltStore}, apiR})
 	otherFiles := http.FileServer(http.Dir(config.General.StaticFilesLocation))

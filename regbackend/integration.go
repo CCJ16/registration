@@ -189,11 +189,11 @@ func (d *dbWiper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type configHandler struct {
+type configChange struct {
 	config *configType
 }
 
-func (c *configHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *configChange) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// This drains the connection pool
 	cTIM.RLock()
 	defer cTIM.RUnlock()
@@ -243,7 +243,7 @@ func setupNewHandlers() http.Handler {
 	mux.HandleFunc("/integration/", http.NotFound)
 
 	myConfig := *config
-	mux.Handle("/integration/config", &configHandler{&myConfig})
+	mux.Handle("/integration/config", &configChange{&myConfig})
 
 	newHandler, quitC, doneC, err := setupStandardHandlers(mux, &myConfig, db)
 	if err != nil {
