@@ -1,6 +1,8 @@
 package main
 
 import (
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"time"
@@ -147,4 +149,9 @@ func TestStringSliceConfig(t *testing.T) {
 			})
 		})
 	})
+}
+
+func init() {
+	// Disable log output for now, to clean up output.
+	log.SetOutput(ioutil.Discard)
 }
