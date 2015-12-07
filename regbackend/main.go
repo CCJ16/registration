@@ -331,7 +331,7 @@ func setupStandardHandlers(globalRouter httpRouter, config *configType, db *bolt
 	NewSummaryHandler(apiR, gprdb)
 
 	apiR.Handle("/grabdb", &grabDb{db}).Headers("X-My-Auth-Token", key).Methods("GET").Queries("key", key)
-	globalRouter.Handle("/config", &configHandler{config})
+	globalRouter.Handle("/config", disableCacheHandler{&configHandler{config}})
 
 	globalRouter.Handle("/api/", &disableCacheHandler{&xsrfVerifierHandler{&xsrfTokenCreator{nil, config, boltStore}, apiR}})
 	otherFiles := http.FileServer(http.Dir(config.General.StaticFilesLocation))
