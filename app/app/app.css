@@ -5,6 +5,10 @@ iframe {
 	left: 0px;
 }
 
+.content {
+    width: 100%
+}
+
 .title-text {
 	font-family: "Rock Salt", RobotoDraft, Roboto, 'Helvetica Neue', sans-serif;
 }
