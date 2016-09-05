@@ -308,6 +308,16 @@ func TestPreRegWaitingListHandler(t *testing.T) {
 		store := sessions.NewCookieStore([]byte("A"))
 		prh := NewGroupPreRegistrationHandler(router, config, prdb, &AuthenticationHandler{config, store}, ces)
 
+		var loggedInCookie []string
+		r := &http.Request{}
+		sess, err := store.New(r, globalSessionName)
+		So(err, ShouldBeNil)
+		So(sess, ShouldNotBeNil)
+		sess.Values[authStatusLoggedIn] = true
+		w := httptest.NewRecorder()
+		store.Save(r, w, sess)
+		loggedInCookie = w.Header()["Set-Cookie"]
+
 		reg1 := &GroupPreRegistration{
 			PackName:           "Pack A",
 			GroupName:          "1st Testingway",
@@ -502,10 +512,7 @@ func TestPreRegWaitingListHandler(t *testing.T) {
 
 			Convey("While logged in", func() {
 				// Fake being logged in
-				sess, err := sessions.GetRegistry(r).Get(store, globalSessionName)
-				So(err, ShouldBeNil)
-				So(sess, ShouldNotBeNil)
-				sess.Values[authStatusLoggedIn] = true
+				r.Header["Cookie"] = loggedInCookie
 
 				router.ServeHTTP(w, r)
 				Convey("Should receive back a 200 code", func() {
@@ -519,10 +526,7 @@ func TestPreRegWaitingListHandler(t *testing.T) {
 						w := httptest.NewRecorder()
 
 						// Fake being logged in
-						sess, err := sessions.GetRegistry(r).Get(store, globalSessionName)
-						So(err, ShouldBeNil)
-						So(sess, ShouldNotBeNil)
-						sess.Values[authStatusLoggedIn] = true
+						r.Header["Cookie"] = loggedInCookie
 
 						router.ServeHTTP(w, r)
 						Convey("Should receive back a 400 code", func() {
