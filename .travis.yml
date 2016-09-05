@@ -22,7 +22,7 @@ addons:
     packages:
     - g++-4.9
     - gcc-4.9
-  firefox: "latest"
+  firefox: "44.0"
   sauce_connect: true
 
 install:
