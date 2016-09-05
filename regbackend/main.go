@@ -4,8 +4,8 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
-	"encoding/json"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -258,10 +258,10 @@ func (c *configHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	config := struct {
-		RegistrationOpen bool `json:"registrationOpen"`
+		RegistrationOpen          bool `json:"registrationOpen"`
 		RegistrationOnWaitingList bool `json:"registrationOnWaitingList"`
 	}{
-		RegistrationOpen: c.config.General.EnableGroupReg,
+		RegistrationOpen:          c.config.General.EnableGroupReg,
 		RegistrationOnWaitingList: c.config.General.EnableWaitingList,
 	}
 
