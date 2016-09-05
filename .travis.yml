@@ -10,6 +10,11 @@ env:
     - REMOTE=0
     - secure: RgQaAlyUvBfM4SUi7dzQp+PVAFEVa9uTvSN5mrwtwYgcogrUk0enFg58PPYWAHIXaImL61fJrchvswESUMEOFS63yjj0ExPQVxMbVGrnHOZxpQyMIfhRlqrrDsh5ebWhsnia9nmovqX5d93o477DNgFrxhMSVZvPcOD5FxLOzZA=
 
+matrix:
+  allow_failures:
+    - go: tip
+  fast_finish: true
+
 addons:
   apt:
     sources:
