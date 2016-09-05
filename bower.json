@@ -6,16 +6,16 @@
   "license": "AGPL-3.0",
   "private": true,
   "dependencies": {
-    "angular": "~1.4.5",
-    "angular-route": "~1.4.5",
-    "angular-loader": "~1.4.5",
-    "angular-material": "~0.11.0",
-    "angular-mocks": "~1.4.5",
-    "angular-resource": "~1.4.5",
-    "angular-sanitize": "~1.4.5",
-    "material-design-icons": "~2.0.0",
+    "angular": "~1.5.8",
+    "angular-route": "~1.5.8",
+    "angular-loader": "~1.5.8",
+    "angular-material": "~1.1.1",
+    "angular-mocks": "~1.5.8",
+    "angular-resource": "~1.5.8",
+    "angular-sanitize": "~1.5.8",
+    "material-design-icons": "~3.0.1",
     "moment": "^2.10.2",
-    "moment-timezone": "^0.4.0",
-    "normalize.css": "~3.0.2"
+    "moment-timezone": "^0.5.5",
+    "normalize.css": "~4.2.0"
   }
 }
