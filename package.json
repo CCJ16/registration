@@ -38,7 +38,7 @@
     "load-grunt-tasks": "^3.1.0",
     "moment": "^2.9.0",
     "moment-timezone": "^0.5.5",
-    "protractor": "^4.0.4",
+    "protractor": "^4.0.13",
     "request": "^2.51.0",
     "time-grunt": "^1.0.0",
     "uglify-js": "^2.4.16"
