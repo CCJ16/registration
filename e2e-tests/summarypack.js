@@ -18,7 +18,7 @@ describe("Pack summary page", function() {
 			flow.execute(function() {
 				var p1 = protractor.promise.defer()
 				browser.executeAsyncScript(function(callback) {
-					var Registration = angular.injector(["ccj16reg"]).get("Registration")
+					var Registration = angular.element(document.body).injector().get("Registration")
 					var reg = new Registration()
 					reg.council = "Test council"
 					reg.groupName = "Test group"
@@ -44,7 +44,7 @@ describe("Pack summary page", function() {
 				})
 				var p2 = protractor.promise.defer()
 				browser.executeAsyncScript(function(callback) {
-					var Registration = angular.injector(["ccj16reg"]).get("Registration")
+					var Registration = angular.element(document.body).injector().get("Registration")
 					var reg = new Registration()
 					reg.council = "Test council 2"
 					reg.groupName = "Test group 2"

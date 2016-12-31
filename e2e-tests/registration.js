@@ -8,7 +8,7 @@ describe("Registration information page", function() {
 			flow.execute(function() {
 				var defer = protractor.promise.defer();
 				browser.executeAsyncScript(function(callback) {
-					var Registration = angular.injector(["ccj16reg"]).get("Registration");
+					var Registration = angular.element(document.body).injector().get("Registration");
 					var reg = new Registration();
 					reg.council = "Test council";
 					reg.groupName = "Test group";
@@ -81,7 +81,7 @@ describe("Registration information page", function() {
 			flow.execute(function() {
 				var defer = protractor.promise.defer();
 				browser.executeAsyncScript(function(callback) {
-					var Registration = angular.injector(["ccj16reg"]).get("Registration");
+					var Registration = angular.element(document.body).injector().get("Registration");
 					var reg = new Registration();
 					reg.council = "Test council";
 					reg.groupName = "Test group";
@@ -130,11 +130,11 @@ describe("Registration information page", function() {
 			flow.execute(function() {
 				var defer = protractor.promise.defer();
 				browser.executeAsyncScript(function(baseUrl, callback) {
-					var $http = angular.injector(["ccj16reg"]).get("$http");
+					var $http = angular.element(document.body).injector().get("$http");
 					$http({ url: baseUrl + "/integration/config" }).then(function(resp) {
 						resp.data.General.EnableWaitingList = true
 						$http({ url: baseUrl + "/integration/config", method: "POST", data: resp.data }).then(function() {
-							var Registration = angular.injector(["ccj16reg"]).get("Registration");
+							var Registration = angular.element(document.body).injector().get("Registration");
 							var reg = new Registration();
 							reg.council = "Test council";
 							reg.groupName = "Test group";

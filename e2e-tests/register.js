@@ -68,7 +68,7 @@ describe("Initial registration process", function() {
 			flow.execute(function() {
 				var defer = protractor.promise.defer()
 				browser.executeAsyncScript(function(baseUrl, callback) {
-					var $http = angular.injector(["ccj16reg"]).get("$http")
+					var $http = angular.element(document.body).injector().get("$http")
 					$http({ url: baseUrl + "/integration/config" }).then(function(resp) {
 						resp.data.General.EnableWaitingList = true
 						$http({ url: baseUrl + "/integration/config", method: "POST", data: resp.data }).then(function() {
@@ -102,7 +102,7 @@ describe("Initial registration process", function() {
 			flow.execute(function() {
 				var defer = protractor.promise.defer()
 				browser.executeAsyncScript(function(baseUrl, callback) {
-					var $http = angular.injector(["ccj16reg"]).get("$http")
+					var $http = angular.element(document.body).injector().get("$http")
 					$http({ url: baseUrl + "/integration/config" }).then(function(resp) {
 						resp.data.General.EnableGroupReg = false
 						$http({ url: baseUrl + "/integration/config", method: "POST", data: resp.data }).then(function() {

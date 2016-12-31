@@ -20,7 +20,7 @@ beforeEach(function () {
 	flow.execute(function() {
 		var defer = protractor.promise.defer();
 		browser.executeAsyncScript(function(baseUrl, callback) {
-			var $http = angular.injector(["ccj16reg"]).get("$http");
+			var $http = angular.element(document.body).injector().get("$http");
 			$http({ url: baseUrl + "/integration/wipe_database" }).then(function() {
 				callback(true)
 			}, function () {
@@ -38,7 +38,7 @@ beforeEach(function () {
 	flow.execute(function() {
 		var defer = protractor.promise.defer();
 		browser.executeAsyncScript(function(baseUrl, callback) {
-			var $http = angular.injector(["ccj16reg"]).get("$http");
+			var $http = angular.element(document.body).injector().get("$http");
 			$http({ url: baseUrl + "/integration/config", method: "DELETE" }).then(function() {
 				callback(true)
 			}, function () {
