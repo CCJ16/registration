@@ -3,6 +3,10 @@ go:
   - 1.7
   - tip
 
+cache:
+  directories:
+    - npm_modules
+
 matrix:
   allow_failures:
     - go: tip
@@ -30,6 +34,7 @@ install:
   - go get -v -t ./...
   - pushd regbackend && go build -v && go build -v -tags integration && popd
   - npm install
+  - npm update --depth 999
   - npm install -g grunt-cli
 
 before_script:
