@@ -34,7 +34,7 @@ install:
   - go get -v -t ./...
   - pushd regbackend && go build -v && go build -v -tags integration && popd
   - npm install
-  - npm update --depth 999
+  - npm update
   - npm install -g grunt-cli
 
 before_script:
