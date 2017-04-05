@@ -37,7 +37,7 @@
     "karma-sauce-launcher": "^1.0.0",
     "load-grunt-tasks": "^3.1.0",
     "moment": "^2.9.0",
-    "moment-timezone": "^0.5.5",
+    "moment-timezone": "^0.5.13",
     "protractor": "^5.1.1",
     "request": "^2.51.0",
     "time-grunt": "^1.0.0",
