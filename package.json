@@ -41,7 +41,7 @@
     "protractor": "^5.1.1",
     "request": "^2.51.0",
     "time-grunt": "^1.0.0",
-    "uglify-js": "^2.4.16"
+    "uglify-js": "^2.8.26"
   },
   "scripts": {
     "postinstall": "bower install",
