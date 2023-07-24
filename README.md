@@ -1,7 +1,7 @@
 # Registration application for CCJ16
 [![Build Status](https://travis-ci.org/CCJ16/registration.svg?branch=master)](https://travis-ci.org/CCJ16/registration)
 
-This project contains the entire registration system for CCJ16.  The site itself is now live at https://registration.cubjamboree.ca for pre-registration.  This project can be used for other registration systems if wanted.
+This project contains the entire registration system for CCJ16.  This project can be used for other registration systems if wanted.
 
 ## Requirements
 
@@ -38,7 +38,7 @@ The executable will log the http requests and some errors.  You can run the serv
 
 ## Tests
 
-To run the server side tests, run `go test ./...` in the repository folder.  To run the client side tests, run `npm test` in the repository folder.  Currently only unit tests are used, end to end tests are not yet done.
+To run the server side tests, run `go test ./...` in the repository folder.  To run the client side tests, run `npm test` in the repository folder.
 
 ## Contributing
 
